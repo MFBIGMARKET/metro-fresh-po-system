@@ -1,0 +1,1563 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="manifest" href="./manifest.json">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Metro Fresh PO System</title>
+    
+    <!-- Google Material Icons -->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    
+    <!-- PapaParse library for CSV parsing -->
+    <script src="https://cdn.jsdelivr.net/npm/papaparse@5.3.2/papaparse.min.js"></script>
+
+    <!-- jsPDF Libraries for PDF Generation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
+    
+    <!-- SheetJS (xlsx) Library for Excel Generation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+
+    <style>
+        :root {
+            --primary-color: #007bff;
+            --secondary-color: #6c757d;
+            --success-color: #28a745;
+            --danger-color: #dc3545;
+            --warning-color: #ffc107;
+            --info-color: #17a2b8;
+            --fv-color: #9C27B0;
+            --voucher-color: #E91E63;
+            --data-entry-color: #009688; /* Teal for Data Entry */
+            --lemongrass-green: #8BC34A; /* Lemongrass Green */
+            --light-color: #f8f9fa;
+            --dark-color: #343a40;
+            --background-color: #FDF5E6; /* Subtle Beige Background */
+            --text-color: #212529;
+            --card-bg: #ffffff;
+            --shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            --border-radius: 12px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        html, body {
+            height: 100%;
+            width: 100%;
+            overflow: hidden;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-color);
+        }
+
+        #appContainer {
+            height: 100%;
+        }
+
+        .page {
+            display: none;
+            flex-direction: column;
+            width: 100%;
+            height: 100%;
+            animation: fadeIn 0.3s ease-in-out;
+            background-color: var(--background-color);
+        }
+        .page.active {
+            display: flex;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.98); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 16px;
+            background-color: var(--card-bg);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            flex-shrink: 0;
+            z-index: 10;
+            position: relative;
+        }
+        .header .title {
+            font-size: 18px;
+            font-weight: 600;
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            white-space: nowrap;
+        }
+        .header-side {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            min-width: 40px; 
+        }
+        .header-side.right {
+            justify-content: flex-end;
+        }
+        .header .icon-button {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .header .icon-button:hover {
+            background-color: #f0f0f0;
+        }
+        .header .material-icons {
+            font-size: 24px;
+            color: var(--secondary-color);
+        }
+
+        .content {
+            flex-grow: 1;
+            padding: 16px;
+            overflow-y: auto;
+            min-height: 0;
+        }
+        
+        #loginPage {
+            justify-content: center;
+            align-items: center;
+        }
+        .login-container {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 20px;
+        }
+        .login-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        .login-header h1 {
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--lemongrass-green);
+        }
+        .login-header p {
+            font-size: 18px;
+            color: var(--text-color);
+        }
+        .tile-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+            width: 100%;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .tile {
+            aspect-ratio: 1.5 / 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background-color: var(--card-bg);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            text-decoration: none;
+            color: var(--text-color);
+            padding: 8px;
+        }
+        .tile:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+        }
+        .tile .material-icons {
+            font-size: 36px;
+            margin-bottom: 8px;
+        }
+        .tile-FOOD .material-icons { color: var(--success-color); }
+        .tile-NONFOOD .material-icons { color: var(--primary-color); }
+        .tile-REPACK .material-icons { color: var(--warning-color); }
+        .tile-HWP .material-icons { color: var(--info-color); }
+        .tile-FV .material-icons { color: var(--fv-color); }
+        .tile-VOUCHER .material-icons { color: var(--voucher-color); }
+        .tile-DATA-ENTRY .material-icons { color: var(--data-entry-color); }
+        .tile-ADMIN .material-icons { color: var(--danger-color); }
+        .tile span {
+            font-weight: 500;
+            text-align: center;
+        }
+
+        .progress-container {
+            padding: 16px;
+            background: var(--card-bg);
+            border-radius: var(--border-radius);
+            margin-bottom: 16px;
+        }
+        .progress-bar {
+            width: 100%;
+            height: 28px;
+            background-color: #e9ecef;
+            border-radius: 14px;
+            position: relative;
+            overflow: hidden;
+        }
+        .progress-bar-inner {
+            height: 100%;
+            background: linear-gradient(90deg, var(--success-color), var(--info-color));
+            border-radius: 14px;
+            transition: width 0.5s ease-out;
+            width: 0;
+        }
+        .progress-bar-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: var(--text-color);
+            font-weight: 600;
+            font-size: 14px;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+        }
+        
+        .item-list { list-style: none; padding: 0; }
+        .list-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px;
+            background-color: var(--card-bg);
+            border-radius: var(--border-radius);
+            margin-bottom: 12px;
+            box-shadow: var(--shadow);
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .list-item:hover { transform: scale(1.02); }
+        .list-item-main { display: flex; flex-direction: column; overflow: hidden; }
+        .list-item-title { font-weight: 600; font-size: 16px; margin-bottom: 4px; }
+        .list-item-subtitle { font-size: 14px; color: var(--secondary-color); }
+        .list-item-amount { font-weight: 600; font-size: 18px; color: var(--success-color); padding-left: 10px; }
+
+        .fab {
+            position: fixed; 
+            bottom: 24px;
+            right: 24px;
+            width: 56px;
+            height: 56px;
+            background-color: var(--danger-color);
+            color: white;
+            border-radius: 50%;
+            border: none;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: transform 0.2s, background-color 0.2s;
+            z-index: 100; 
+        }
+        .fab:hover { transform: scale(1.1); background-color: #c82333; }
+        .fab .material-icons { font-size: 28px; }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        .modal.active { display: flex; }
+        .modal-content {
+            background-color: var(--background-color);
+            width: 90%;
+            max-width: 500px;
+            max-height: 90vh;
+            display: flex;
+            flex-direction: column;
+            border-radius: var(--border-radius);
+            animation: fadeIn 0.3s ease-out;
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px;
+            border-bottom: 1px solid #dee2e6;
+            flex-shrink: 0;
+        }
+        .modal-title { font-size: 18px; font-weight: 600; }
+        .modal-body { padding: 16px; overflow-y: auto; flex-grow: 1; }
+        .modal-footer {
+            padding: 16px;
+            border-top: 1px solid #dee2e6;
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            flex-shrink: 0;
+        }
+        
+        #newOrderPage .content {
+            padding-bottom: 80px;
+        }
+        .page-footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background-color: var(--card-bg);
+            padding: 16px;
+            box-shadow: 0 -2px 8px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 10;
+        }
+        .footer-total { font-size: 18px; font-weight: 600; }
+        .product-search-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            border-bottom: 1px solid #eee;
+            background-color: var(--card-bg);
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .product-search-item:hover { background-color: #f8f9fa; }
+        .product-search-item:first-child { border-top-left-radius: 8px; border-top-right-radius: 8px; }
+        .product-search-item:last-child { border-bottom: none; border-bottom-left-radius: 8px; border-bottom-right-radius: 8px; }
+        .product-search-item .item-name { flex-grow: 1; font-size: 15px; pointer-events: none; }
+        .product-search-item .item-mrp {
+            flex-shrink: 0;
+            min-width: 70px;
+            text-align: right;
+            color: var(--secondary-color);
+            font-weight: 500;
+            font-size: 14px;
+            pointer-events: none;
+        }
+
+        .form-group { margin-bottom: 16px; }
+        .form-group label { display: block; margin-bottom: 8px; font-weight: 500; }
+        .form-control, .form-select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ced4da;
+            border-radius: 8px;
+            font-size: 16px;
+            background-color: var(--card-bg);
+        }
+        .form-control:focus, .form-select:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+        }
+        .btn {
+            padding: 10px 20px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            font-weight: 500;
+            font-size: 16px;
+            transition: background-color 0.2s;
+        }
+        .btn-primary { background-color: var(--primary-color); color: white; }
+        .btn-primary:hover { background-color: #0069d9; }
+        .btn-success { background-color: var(--success-color); color: white; }
+        .btn-success:hover { background-color: #218838; }
+        .btn-danger { background-color: var(--danger-color); color: white; }
+        .btn-danger:hover { background-color: #c82333; }
+        
+        .admin-summary-tile {
+            aspect-ratio: 1.5 / 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background-color: var(--card-bg);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            padding: 12px;
+            text-decoration: none;
+            color: var(--text-color);
+            border-top: 6px solid transparent;
+        }
+        .admin-summary-tile:hover {
+             transform: translateY(-5px);
+            box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+        }
+        .admin-tile-title {
+            font-weight: 500;
+            font-size: 16px;
+            color: var(--secondary-color);
+            margin-bottom: 8px;
+        }
+        .admin-tile-amount {
+            font-weight: 700;
+            font-size: 20px;
+            color: var(--dark-color);
+        }
+        .admin-tile-FOOD { border-top-color: var(--success-color); }
+        .admin-tile-NONFOOD { border-top-color: var(--primary-color); }
+        .admin-tile-REPACK { border-top-color: var(--warning-color); }
+        .admin-tile-HWP { border-top-color: var(--info-color); }
+        .admin-tile-FV { border-top-color: var(--fv-color); }
+        .admin-tile-VOUCHER { border-top-color: var(--voucher-color); }
+        .drilldown-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 16px;
+            font-size: 18px;
+            font-weight: 500;
+            background-color: var(--card-bg);
+            padding: 12px;
+            border-radius: var(--border-radius);
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .drilldown-header-actions {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        
+        .detail-table-wrapper {
+            overflow-x: auto;
+        }
+        .detail-table {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: var(--card-bg);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            overflow: hidden;
+        }
+        .detail-table th, .detail-table td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #eee;
+            text-align: left;
+            white-space: nowrap;
+        }
+        .detail-table th {
+            background-color: #f8f9fa;
+            font-weight: 600;
+            font-size: 14px;
+            color: var(--secondary-color);
+        }
+        .detail-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+        .detail-table .text-right { text-align: right; }
+        .detail-table .text-center { text-align: center; }
+        .detail-table tfoot td {
+            font-weight: 700;
+            font-size: 16px;
+            background-color: #f8f9fa;
+        }
+
+        #calendarModal .modal-content { max-width: 320px; border-radius: var(--border-radius); }
+        .calendar { text-align: center; }
+        .calendar-header { display: flex; justify-content: space-between; align-items: center; padding: 10px; }
+        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; }
+        .calendar-day, .calendar-day-name { padding: 8px; }
+        .calendar-day-name { font-weight: bold; color: var(--secondary-color); font-size: 12px; }
+        .calendar-day { cursor: pointer; border-radius: 50%; }
+        .calendar-day:not(.empty):hover { background-color: #f0f0f0; }
+        .calendar-day.today { font-weight: bold; background-color: var(--warning-color); color: white; }
+        .calendar-day.selected { background-color: var(--primary-color); color: white; }
+
+        .empty-state {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            height: 100%;
+            padding: 20px;
+            color: var(--secondary-color);
+        }
+        .empty-state .material-icons { font-size: 64px; margin-bottom: 16px; }
+        .empty-state p { font-size: 18px; }
+
+        #adminContent .tile-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+        }
+
+        #adminContent .admin-total-tile {
+            grid-column: 1 / 3;
+            aspect-ratio: auto;
+        }
+
+        @media (min-width: 768px) {
+            .tile-grid { 
+                grid-template-columns: repeat(4, 1fr); 
+            }
+            #loginPage .tile-grid {
+                 grid-template-columns: repeat(4, 1fr);
+            }
+
+            #adminContent .tile-grid {
+                display: grid;
+                grid-template-columns: repeat(4, 1fr);
+                grid-template-rows: repeat(2, 1fr);
+                gap: 16px;
+            }
+            #adminContent .admin-total-tile {
+                grid-column: 1 / 2;
+                grid-row: 1 / 3;
+                aspect-ratio: auto;
+            }
+            
+            #dataEntryPage .tile-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+
+            .header { padding: 16px 32px; }
+            .header .title { font-size: 20px; }
+            .content { padding-left: 32px; padding-right: 32px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="appContainer">
+        <div id="loginPage" class="page active">
+            <div class="login-container">
+                <div class="login-header">
+                    <h1>METRO FRESH</h1>
+                    <p>PO SYSTEM</p>
+                </div>
+                <div class="tile-grid">
+                    <a class="tile tile-FOOD" data-page="categoryPage" data-category="FOOD"><i class="material-icons">shopping_basket</i><span>FOOD</span></a>
+                    <a class="tile tile-NONFOOD" data-page="categoryPage" data-category="NONFOOD"><i class="material-icons">inventory_2</i><span>NONFOOD</span></a>
+                    <a class="tile tile-REPACK" data-page="categoryPage" data-category="REPACK"><i class="material-icons">restart_alt</i><span>REPACK</span></a>
+                    <a class="tile tile-HWP" data-page="categoryPage" data-category="HWP"><i class="material-icons">home</i><span>HWP</span></a>
+                    <a class="tile tile-FV" data-page="categoryPage" data-category="F&V"><i class="material-icons">grass</i><span>F&V</span></a>
+                    <a class="tile tile-VOUCHER" data-page="voucherPage"><i class="material-icons">receipt_long</i><span>VOUCHER</span></a>
+                    <a class="tile tile-DATA-ENTRY" data-page="dataEntryPage"><i class="material-icons">edit_note</i><span>Data Entry</span></a>
+                    <a class="tile tile-ADMIN" data-page="adminPage"><i class="material-icons">admin_panel_settings</i><span>ADMIN</span></a>
+                </div>
+            </div>
+        </div>
+
+        <div id="categoryPage" class="page">
+            <div class="header">
+                <div class="header-side left">
+                    <button class="icon-button back-btn"><i class="material-icons">arrow_back</i></button>
+                </div>
+                <div class="title" id="categoryTitle">Category</div>
+                <div class="header-side right">
+                    <button class="icon-button calendar-btn"><i class="material-icons">calendar_today</i></button>
+                </div>
+            </div>
+            <div class="content">
+                <div class="progress-container">
+                    <div class="progress-bar">
+                        <div class="progress-bar-inner" id="poProgressBar"></div>
+                        <div class="progress-bar-text" id="poProgressText">₹0 / ₹100,000</div>
+                    </div>
+                </div>
+                <div id="poListContainer"></div>
+            </div>
+            <button class="fab" id="addPoBtn"><i class="material-icons">add</i></button>
+        </div>
+
+        <div id="newOrderPage" class="page">
+            <div class="header">
+                <div class="header-side left">
+                    <button class="icon-button back-btn"><i class="material-icons">arrow_back</i></button>
+                </div>
+                <div class="title">New Purchase Order</div>
+                <div class="header-side right"></div>
+            </div>
+            <div class="content">
+                <div class="form-group">
+                    <label for="vendorSelect">Select Vendor</label>
+                    <select id="vendorSelect" class="form-select"></select>
+                </div>
+                <div class="form-group">
+                    <label for="productSearch">Search & Tap to Add Products</label>
+                    <input type="text" id="productSearch" class="form-control" placeholder="Type to search...">
+                </div>
+                <div id="productSearchResults" style="margin-top: 8px;"></div>
+                <h4 style="margin-top: 24px; margin-bottom: 12px;">Order Items</h4>
+                <div id="currentPoItems"></div>
+            </div>
+            <div class="page-footer">
+                <div class="footer-total">Total: <span id="poTotalAmount">₹0.00</span></div>
+                <button class="btn btn-primary" id="savePoBtn">Save PO</button>
+            </div>
+        </div>
+
+        <div id="adminPage" class="page">
+            <div class="header">
+                <div class="header-side left">
+                    <button class="icon-button back-btn"><i class="material-icons">arrow_back</i></button>
+                </div>
+                <div class="title" id="adminTitle">Admin</div>
+                <div class="header-side right">
+                    <button class="icon-button calendar-btn"><i class="material-icons">calendar_today</i></button>
+                    <button class="icon-button" id="settingsBtn"><i class="material-icons">settings</i></button>
+                </div>
+            </div>
+            <div class="content" id="adminContent"></div>
+        </div>
+
+        <div id="dataEntryPage" class="page">
+            <div class="header">
+                <div class="header-side left">
+                    <button class="icon-button back-btn"><i class="material-icons">arrow_back</i></button>
+                </div>
+                <div class="title" id="dataEntryTitle">Data Entry</div>
+                <div class="header-side right">
+                    <button class="icon-button calendar-btn"><i class="material-icons">calendar_today</i></button>
+                </div>
+            </div>
+            <div class="content" id="dataEntryContent"></div>
+        </div>
+
+        <div id="voucherPage" class="page">
+             <div class="header">
+                <div class="header-side left">
+                    <button class="icon-button back-btn"><i class="material-icons">arrow_back</i></button>
+                </div>
+                <div class="title">Vouchers</div>
+                <div class="header-side right">
+                    <button class="icon-button calendar-btn"><i class="material-icons">calendar_today</i></button>
+                </div>
+            </div>
+            <div class="content">
+                <div class="progress-container">
+                    <div class="progress-bar">
+                        <div class="progress-bar-inner" id="voucherProgressBar"></div>
+                        <div class="progress-bar-text" id="voucherProgressText">₹0 / ₹100,000</div>
+                    </div>
+                </div>
+                <div id="voucherListContainer"></div>
+            </div>
+            <button class="fab" id="addVoucherBtn"><i class="material-icons">add</i></button>
+        </div>
+    </div>
+
+    <div id="settingsModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Admin Settings</h3>
+                <button class="icon-button" data-close-modal="settingsModal"><i class="material-icons">close</i></button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="vendorFileUpload">Upload Vendor List (.csv)</label>
+                    <input type="file" id="vendorFileUpload" class="form-control" accept=".csv">
+                </div>
+                <hr style="margin: 20px 0;">
+
+                <div class="form-group">
+                    <label for="logoUpload">Upload Company Logo</label>
+                    <input type="file" id="logoUpload" class="form-control" accept="image/*">
+                    <div style="margin-top: 10px; text-align: center;">
+                        <p style="font-size: 12px; color: var(--secondary-color);">Current Logo:</p>
+                        <img id="logoPreview" src="" alt="No Logo" style="max-width: 100px; max-height: 50px; margin-top: 5px; background-color: #eee; padding: 5px; border-radius: 4px; display: none;">
+                        <p id="noLogoText" style="font-size: 14px;">No Logo Uploaded</p>
+                    </div>
+                </div>
+                <hr style="margin: 20px 0;">
+
+                <p style="font-weight: 500; margin-bottom: 10px;">Upload Item Lists (.csv)</p>
+                <div class="form-group"><label>FOOD</label><input type="file" class="form-control item-upload" data-category="FOOD" accept=".csv"></div>
+                <div class="form-group"><label>NONFOOD</label><input type="file" class="form-control item-upload" data-category="NONFOOD" accept=".csv"></div>
+                <div class="form-group"><label>REPACK</label><input type="file" class="form-control item-upload" data-category="REPACK" accept=".csv"></div>
+                <div class="form-group"><label>HWP</label><input type="file" class="form-control item-upload" data-category="HWP" accept=".csv"></div>
+                <div class="form-group"><label>F&V</label><input type="file" class="form-control item-upload" data-category="F&V" accept=".csv"></div>
+            </div>
+        </div>
+    </div>
+    
+    <div id="poDetailsModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header"><h3 class="modal-title" id="poDetailsTitle">PO Details</h3><button class="icon-button" data-close-modal="poDetailsModal"><i class="material-icons">close</i></button></div>
+            <div class="modal-body" id="poDetailsBody"></div>
+        </div>
+    </div>
+
+    <div id="newVoucherModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">New Voucher</h3>
+                <button class="icon-button" data-close-modal="newVoucherModal"><i class="material-icons">close</i></button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="voucherHeader">Header</label>
+                    <input type="text" id="voucherHeader" class="form-control" placeholder="e.g., Office Supplies">
+                </div>
+                <div class="form-group">
+                    <label for="voucherAmount">Amount</label>
+                    <input type="number" id="voucherAmount" class="form-control" placeholder="0.00">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-primary" id="saveVoucherBtn">Save Voucher</button>
+            </div>
+        </div>
+    </div>
+    
+    <div id="calendarModal" class="modal">
+        <div class="modal-content"><div class="modal-body" id="calendarContainer"></div></div>
+    </div>
+
+<script>
+    const firebaseConfig = {
+        apiKey: "AIzaSyAaCIqRl9bf6mVVZSH5T3PrPicVELnCu6U",
+  authDomain: "posystem-496da.firebaseapp.com",
+  projectId: "posystem-496da",
+  storageBucket: "posystem-496da.firebasestorage.app",
+  messagingSenderId: "975837782909",
+  appId: "1:975837782909:web:944a4c9a034f13107fe214"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+    console.log("Firebase has been initialized.");
+
+
+    document.addEventListener('DOMContentLoaded', () => {
+    
+        const AppState = {
+            history: ['loginPage'],
+            currentCategory: null,
+            currentDate: new Date(),
+            adminDrilldown: [],
+            dataEntryDrilldown: [],
+            newPO: { vendor: null, items: [], total: 0 },
+            appLogo: null,
+            itemCache: [] // --- PERFORMANCE FIX: For caching items on New Order page
+        };
+
+        const allPages = document.querySelectorAll('.page');
+        
+        // --- PERFORMANCE FIX: Debounce utility function
+        function debounce(func, delay = 300) {
+            let timer;
+            return (...args) => {
+                clearTimeout(timer);
+                timer = setTimeout(() => {
+                    func.apply(this, args);
+                }, delay);
+            };
+        }
+
+        async function navigateTo(pageId, context = {}, addToHistory = true) {
+            allPages.forEach(p => p.classList.remove('active'));
+            const targetPage = document.getElementById(pageId);
+            if (targetPage) {
+                targetPage.classList.add('active');
+                if (addToHistory && AppState.history[AppState.history.length - 1] !== pageId) {
+                    AppState.history.push(pageId);
+                }
+                
+                if (pageId === 'categoryPage') await renderCategoryPage(context.category);
+                if (pageId === 'adminPage') await renderAdminPage();
+                if (pageId === 'newOrderPage') await renderNewOrderPage();
+                if (pageId === 'voucherPage') await renderVoucherPage();
+                if (pageId === 'dataEntryPage') await renderDataEntryPage();
+            }
+        }
+
+        async function goBack() {
+            const currentPage = AppState.history[AppState.history.length - 1];
+            if (currentPage === 'adminPage') {
+                if (AppState.adminDrilldown.length > 0) {
+                    AppState.adminDrilldown.pop();
+                    await renderAdminPage();
+                } else {
+                    navigateTo('loginPage', {}, false);
+                    AppState.history = ['loginPage']; 
+                }
+                return;
+            }
+            if (currentPage === 'dataEntryPage') {
+                if (AppState.dataEntryDrilldown.length > 0) {
+                    AppState.dataEntryDrilldown.pop();
+                    await renderDataEntryPage();
+                } else {
+                    navigateTo('loginPage', {}, false);
+                    AppState.history = ['loginPage'];
+                }
+                return;
+            }
+            if (currentPage === 'newOrderPage') {
+                AppState.itemCache = []; // Clear cache when leaving the page
+            }
+
+            if (AppState.history.length > 1) {
+                AppState.history.pop();
+                await navigateTo(AppState.history[AppState.history.length - 1], { category: AppState.currentCategory }, false);
+            } else {
+                navigateTo('loginPage', {}, false);
+            }
+        }
+        
+        const showModal = (modalId) => document.getElementById(modalId)?.classList.add('active');
+        const hideModal = (modalId) => document.getElementById(modalId)?.classList.remove('active');
+
+        function toLocalDateString(date) {
+            const year = date.getFullYear();
+            const month = (date.getMonth() + 1).toString().padStart(2, '0');
+            const day = date.getDate().toString().padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+        
+        function formatDisplayDate(dateStringYMD) {
+            if (!dateStringYMD) return '';
+            const [year, month, day] = dateStringYMD.split('-');
+            return `${day}/${month}/${year.slice(2)}`;
+        }
+
+        async function getPOsForDate(category, dateString) {
+            const snapshot = await db.collection('purchaseOrders')
+                .where('category', '==', category)
+                .where('date', '==', dateString)
+                .get();
+            return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        }
+        
+        async function getPOsByVendor(category, vendor, dateString) {
+             const snapshot = await db.collection('purchaseOrders')
+                .where('category', '==', category)
+                .where('vendor', '==', vendor)
+                .where('date', '==', dateString)
+                .get();
+            return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        }
+
+        async function getVouchersForDate(dateString) {
+            const snapshot = await db.collection('vouchers')
+                .where('date', '==', dateString)
+                .orderBy('timestamp', 'desc')
+                .get();
+            return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        }
+
+        async function getAllPOsForDate(dateString) {
+             const snapshot = await db.collection('purchaseOrders')
+                .where('date', '==', dateString)
+                .get();
+            return snapshot.docs.map(doc => doc.data());
+        }
+
+        async function getItemsForCategory(category) {
+            const snapshot = await db.collection('items')
+                .where('category', '==', category)
+                .get();
+            return snapshot.docs.map(doc => ({id: doc.id, ...doc.data()}));
+        }
+        
+        async function getApprovalStatus(approvalKey) {
+            const doc = await db.collection('approvals').doc(approvalKey).get();
+            return doc.exists;
+        }
+
+        async function renderAdminPage() {
+            const drilldownLevel = AppState.adminDrilldown.length;
+            const adminContent = document.getElementById('adminContent');
+            const adminTitle = document.getElementById('adminTitle');
+            const dateString = toLocalDateString(AppState.currentDate);
+            
+            if (drilldownLevel === 0) {
+                adminTitle.textContent = 'Admin';
+                await renderAdminDashboard(adminContent, dateString);
+            } else if (drilldownLevel === 1) {
+                adminTitle.textContent = AppState.adminDrilldown[0];
+                await renderAdminCategoryDetail(adminContent, AppState.adminDrilldown[0], dateString);
+            } else if (drilldownLevel === 2) {
+                adminTitle.textContent = AppState.adminDrilldown[1];
+                await renderAdminVendorDetail(adminContent, AppState.adminDrilldown[0], AppState.adminDrilldown[1], dateString);
+            }
+        }
+
+        async function renderAdminDashboard(container, dateString) {
+            const allPOs = await getAllPOsForDate(dateString);
+            const allVouchers = await getVouchersForDate(dateString);
+
+            const categories = ['FOOD', 'NONFOOD', 'REPACK', 'HWP', 'F&V'];
+            let totals = { ALL: 0, ...Object.fromEntries(categories.map(cat => [cat, 0])) };
+
+            categories.forEach(cat => {
+                const categoryTotal = allPOs
+                    .filter(po => po.category === cat)
+                    .reduce((sum, po) => sum + po.total, 0);
+                totals[cat] = categoryTotal;
+                totals.ALL += categoryTotal;
+            });
+            
+            const voucherTotal = allVouchers.reduce((sum, v) => sum + v.amount, 0);
+            totals.ALL += voucherTotal;
+            
+            container.innerHTML = `<div class="tile-grid">
+                <div class="admin-summary-tile admin-total-tile" style="background-color: var(--dark-color); cursor: default;">
+                    <span class="admin-tile-title" style="color: white;">TOTAL</span>
+                    <span class="admin-tile-amount" style="color: white;">₹${totals.ALL.toFixed(2)}</span>
+                </div>
+                ${categories.map(cat => `<a class="admin-summary-tile admin-tile-${cat.replace('&', '')} admin-category-tile" data-category="${cat}">
+                    <span class="admin-tile-title">${cat}</span>
+                    <span class="admin-tile-amount">₹${(totals[cat] || 0).toFixed(2)}</span>
+                </a>`).join('')}
+                <a class="admin-summary-tile admin-tile-VOUCHER admin-category-tile" data-category="VOUCHER">
+                    <span class="admin-tile-title">VOUCHER</span>
+                    <span class="admin-tile-amount">₹${(voucherTotal || 0).toFixed(2)}</span>
+                </a>
+            </div>`;
+        }
+
+        async function renderAdminCategoryDetail(container, category, dateString) {
+             if (category === 'VOUCHER') {
+                const vouchers = await getVouchersForDate(dateString);
+                const headerTotals = vouchers.reduce((acc, v) => {
+                    acc[v.header] = (acc[v.header] || 0) + v.amount;
+                    return acc;
+                }, {});
+                if (Object.keys(headerTotals).length === 0) {
+                    container.innerHTML = `<div class="empty-state"><i class="material-icons">info</i><p>No vouchers on this date.</p></div>`;
+                    return;
+                }
+                container.innerHTML = `<div class="drilldown-header">Voucher Totals</div>
+                    <ul class="item-list">${Object.entries(headerTotals).map(([header, total]) => `
+                        <li class="list-item admin-vendor-tile" data-vendor="${header}">
+                            <span class="list-item-title">${header}</span>
+                            <span class="list-item-amount">₹${total.toFixed(2)}</span>
+                        </li>`).join('')}</ul>`;
+                return;
+            }
+
+            const pos = await getPOsForDate(category, dateString);
+            const vendorTotals = pos.reduce((acc, po) => {
+                acc[po.vendor] = (acc[po.vendor] || 0) + po.total;
+                return acc;
+            }, {});
+
+            if (Object.keys(vendorTotals).length === 0) {
+                container.innerHTML = `<div class="empty-state"><i class="material-icons">info</i><p>No orders for ${category} on this date.</p></div>`;
+                return;
+            }
+
+            container.innerHTML = `<div class="drilldown-header">Vendor Totals for ${category}</div>
+                <ul class="item-list">${Object.entries(vendorTotals).map(([vendor, total]) => `
+                    <li class="list-item admin-vendor-tile" data-vendor="${vendor}">
+                        <span class="list-item-title">${vendor}</span>
+                        <span class="list-item-amount">₹${total.toFixed(2)}</span>
+                    </li>`).join('')}</ul>`;
+        }
+        
+        async function renderAdminVendorDetail(container, category, vendorOrHeader, dateString) {
+            if (category === 'VOUCHER') {
+                const snapshot = await db.collection('vouchers').where('date', '==', dateString).where('header', '==', vendorOrHeader).get();
+                const vouchers = snapshot.docs.map(doc => doc.data());
+                container.innerHTML = `<div class="drilldown-header">Vouchers for ${vendorOrHeader}</div>
+                    <div class="detail-table-wrapper"><table class="detail-table">
+                        <thead><tr><th>Date</th><th class="text-right">Amount</th></tr></thead>
+                        <tbody>${vouchers.map(v => `<tr><td>${formatDisplayDate(v.date)}</td><td class="text-right">₹${v.amount.toFixed(2)}</td></tr>`).join('')}</tbody>
+                    </table></div>`;
+                return;
+            }
+
+            const pos = await getPOsByVendor(category, vendorOrHeader, dateString);
+            if (pos.length === 0) {
+                container.innerHTML = `<div class="empty-state"><i class="material-icons">info</i><p>No products for this vendor on this date.</p></div>`;
+                return;
+            }
+
+            const allItems = await getItemsForCategory(category);
+            const allItemsMap = new Map(allItems.map(i => [i['Item Code'], i]));
+
+            const productSummary = {};
+            
+            pos.forEach(po => {
+                po.items.forEach(item => {
+                    if (!productSummary[item.itemCode]) {
+                        const originalItem = allItemsMap.get(item.itemCode);
+                        productSummary[item.itemCode] = { 
+                            name: item.itemName, 
+                            mrp: originalItem ? parseFloat(originalItem.MRP || 0) : 0, 
+                            cost: item.cost, 
+                            qty: 0, 
+                            totalValue: 0 
+                        };
+                    }
+                    productSummary[item.itemCode].qty += item.qty;
+                    productSummary[item.itemCode].totalValue += item.qty * item.cost;
+                });
+            });
+            
+            const approvalKey = `${dateString}-${category}-${vendorOrHeader.replace(/\s+/g, '_')}`;
+            const isApproved = await getApprovalStatus(approvalKey);
+            
+            const actionButtonHTML = isApproved
+                ? `<button class="btn btn-success" id="downloadPdfBtn" data-category="${category}" data-vendor="${vendorOrHeader}" data-date="${dateString}"><i class="material-icons" style="font-size: 18px; vertical-align: middle; margin-right: 5px;">picture_as_pdf</i>Download PDF</button>`
+                : `<button class="btn btn-primary" id="approveBtn" data-key="${approvalKey}"><i class="material-icons" style="font-size: 18px; vertical-align: middle; margin-right: 5px;">check_circle</i>Approve Order</button>`;
+            
+            const grandTotal = Object.values(productSummary).reduce((sum, item) => sum + item.totalValue, 0);
+
+            container.innerHTML = `
+                <div class="drilldown-header">
+                    <span>Products from ${vendorOrHeader}</span>
+                    <div class="drilldown-header-actions">
+                        ${actionButtonHTML}
+                        <button class="btn btn-danger" id="deleteOrderBtn" data-category="${category}" data-vendor="${vendorOrHeader}" data-date="${dateString}"><i class="material-icons" style="font-size: 18px; vertical-align: middle;">delete</i></button>
+                    </div>
+                </div>
+                <div class="detail-table-wrapper"><table class="detail-table">
+                    <thead><tr><th>Product</th><th class="text-right">MRP</th><th class="text-right">Cost</th><th class="text-center">Qty</th><th class="text-right">Total</th></tr></thead>
+                    <tbody>${Object.values(productSummary).map(item => `<tr><td>${item.name}</td><td class="text-right">₹${item.mrp.toFixed(2)}</td><td class="text-right">₹${item.cost.toFixed(2)}</td><td class="text-center">${item.qty}</td><td class="text-right">₹${item.totalValue.toFixed(2)}</td></tr>`).join('')}</tbody>
+                    <tfoot><tr><td colspan="4">Grand Total</td><td class="text-right">₹${grandTotal.toFixed(2)}</td></tr></tfoot>
+                </table></div>`;
+        }
+
+        async function renderCategoryPage(category) {
+            if (!category) return;
+            AppState.currentCategory = category;
+            document.getElementById('categoryTitle').textContent = `${category}`;
+            await renderPOList();
+        }
+        
+        async function renderPOList() {
+            const poListContainer = document.getElementById('poListContainer');
+            const dateString = toLocalDateString(AppState.currentDate);
+            const filteredPOs = await getPOsForDate(AppState.currentCategory, dateString);
+            
+            poListContainer.innerHTML = filteredPOs.length === 0 
+                ? `<div class="empty-state"><i class="material-icons">inbox</i><p>No orders for today.</p></div>`
+                : `<ul class="item-list">${filteredPOs.map(po => `<li class="list-item" data-po-id="${po.id}"><div class="list-item-main"><span class="list-item-title">${po.vendor}</span><span class="list-item-subtitle">${po.poNumber} &bull; ${po.items.length} items</span></div><span class="list-item-amount">₹${po.total.toFixed(2)}</span></li>`).join('')}</ul>`;
+            updateProgressBar(filteredPOs, 'po');
+        }
+
+        async function renderVoucherPage() {
+            await renderVoucherList();
+        }
+
+        async function renderVoucherList() {
+            const container = document.getElementById('voucherListContainer');
+            const dateString = toLocalDateString(AppState.currentDate);
+            const filteredVouchers = await getVouchersForDate(dateString);
+
+            container.innerHTML = filteredVouchers.length === 0
+                ? `<div class="empty-state"><i class="material-icons">receipt_long</i><p>No vouchers for today.</p></div>`
+                : `<ul class="item-list">${filteredVouchers.map(v => `<li class="list-item" style="cursor:default;"><span class="list-item-title">${v.header}</span><span class="list-item-amount">₹${v.amount.toFixed(2)}</span></li>`).join('')}</ul>`;
+            updateProgressBar(filteredVouchers, 'voucher');
+        }
+
+        function updateProgressBar(items, type) {
+            const total = items.reduce((sum, item) => sum + (type === 'voucher' ? item.amount : item.total), 0);
+            const max = 100000;
+            const percentage = Math.min((total / max) * 100, 100);
+            
+            const bar = document.getElementById(type === 'voucher' ? 'voucherProgressBar' : 'poProgressBar');
+            const text = document.getElementById(type === 'voucher' ? 'voucherProgressText' : 'poProgressText');
+
+            bar.style.width = `${percentage}%`;
+            text.textContent = `₹${total.toFixed(0)} / ₹${max.toLocaleString()}`;
+        }
+
+        async function renderNewOrderPage() {
+            const vendorSelect = document.getElementById('vendorSelect');
+            vendorSelect.innerHTML = '<option value="">Loading Vendors...</option>';
+            const vendorsSnapshot = await db.collection('vendors').orderBy('Customer').get();
+            const vendors = vendorsSnapshot.docs.map(doc => doc.data());
+            
+            vendorSelect.innerHTML = '<option value="">-- Select a Vendor --</option>' + vendors.map(v => `<option value="${v.Customer}">${v.Customer}</option>`).join('');
+            
+            // --- PERFORMANCE FIX: Fetch and cache items on page load
+            document.getElementById('productSearch').placeholder = "Loading items...";
+            AppState.itemCache = await getItemsForCategory(AppState.currentCategory);
+            document.getElementById('productSearch').placeholder = "Type to search...";
+            
+            AppState.newPO = { vendor: null, items: [], total: 0 };
+            document.getElementById('productSearch').value = '';
+            document.getElementById('productSearchResults').innerHTML = '';
+            renderCurrentPOItems();
+            updatePOTotal();
+        }
+        
+        // --- PERFORMANCE FIX: This function is now synchronous and uses the cache
+        function renderProductSearchResults(query) {
+            const container = document.getElementById('productSearchResults');
+            if (!query || query.length < 2) { container.innerHTML = ''; return; }
+            
+            const items = AppState.itemCache;
+
+            const filteredItems = items
+                .filter(item => item['Item Name'] && item['Item Name'].toLowerCase().includes(query.toLowerCase()))
+                .slice(0, 50);
+
+            container.innerHTML = filteredItems.map(item => `<div class="product-search-item" data-item-id="${item.id}"><div class="item-name">${item['Item Name']}</div><div class="item-mrp">MRP: ${parseFloat(item.MRP || 0).toFixed(2)}</div></div>`).join('');
+        }
+
+        function renderCurrentPOItems() {
+            const container = document.getElementById('currentPoItems');
+            container.innerHTML = AppState.newPO.items.length === 0
+                ? `<div class="empty-state" style="padding:10px; height: 100px; background-color: var(--card-bg); border-radius: var(--border-radius);"><i class="material-icons" style="font-size:32px;">add_shopping_cart</i><p style="font-size:14px;">Add items by searching above</p></div>`
+                : AppState.newPO.items.map((item, index) => `<div class="list-item" style="padding: 10px; margin-bottom: 5px; cursor: default;"><div style="flex-grow:1;"><div class="list-item-title" style="font-size:14px;">${item.itemName}</div><div style="display:flex; align-items:center; gap:10px; margin-top:5px;"><span>Qty:</span><input type="number" class="form-control po-item-qty" value="${item.qty}" data-index="${index}" style="width: 70px; padding: 5px;"><span>@ ₹${item.cost.toFixed(2)}</span></div></div><button class="icon-button po-item-remove" data-index="${index}"><i class="material-icons" style="color:var(--danger-color)">delete</i></button></div>`).join('');
+        }
+
+        const updatePOTotal = () => {
+            AppState.newPO.total = AppState.newPO.items.reduce((sum, item) => sum + (item.qty * item.cost), 0);
+            document.getElementById('poTotalAmount').textContent = `₹${AppState.newPO.total.toFixed(2)}`;
+        };
+        
+        function renderCalendar() {
+            const container = document.getElementById('calendarContainer');
+            const { currentDate } = AppState;
+            const year = currentDate.getFullYear();
+            const month = currentDate.getMonth();
+            const monthName = currentDate.toLocaleString('default', { month: 'long' });
+
+            container.innerHTML = `<div class="calendar">
+                <div class="calendar-header">
+                    <button class="icon-button" id="prevMonth"><i class="material-icons">chevron_left</i></button>
+                    <span>${monthName} ${year}</span>
+                    <button class="icon-button" id="nextMonth"><i class="material-icons">chevron_right</i></button>
+                </div>
+                <div class="calendar-grid">
+                    ${['S','M','T','W','T','F','S'].map(d => `<div class="calendar-day-name">${d}</div>`).join('')}
+                    ${Array(new Date(year, month, 1).getDay()).fill(0).map(() => `<div class="calendar-day empty"></div>`).join('')}
+                    ${Array(new Date(year, month + 1, 0).getDate()).fill(0).map((_, i) => {
+                        const d = new Date(year, month, i + 1);
+                        return `<div class="calendar-day ${d.toDateString() === new Date().toDateString() ? 'today' : ''} ${d.toDateString() === currentDate.toDateString() ? 'selected' : ''}" data-day="${i + 1}">${i + 1}</div>`;
+                    }).join('')}
+                </div></div>`;
+            showModal('calendarModal');
+        }
+
+        async function renderDataEntryPage() {
+            const drilldownLevel = AppState.dataEntryDrilldown.length;
+            const container = document.getElementById('dataEntryContent');
+            const title = document.getElementById('dataEntryTitle');
+            const dateString = toLocalDateString(AppState.currentDate);
+            
+            if (drilldownLevel === 0) {
+                title.textContent = 'Data Entry';
+                renderDataEntryDashboard(container);
+            } else if (drilldownLevel === 1) {
+                title.textContent = AppState.dataEntryDrilldown[0];
+                await renderDataEntryCategoryDetail(container, AppState.dataEntryDrilldown[0], dateString);
+            } else if (drilldownLevel === 2) {
+                title.textContent = AppState.dataEntryDrilldown[1];
+                await renderDataEntryVendorDetail(container, AppState.dataEntryDrilldown[0], AppState.dataEntryDrilldown[1], dateString);
+            }
+        }
+        
+        function renderDataEntryDashboard(container) {
+            const categories = ['FOOD', 'NONFOOD', 'REPACK', 'HWP', 'F&V'];
+            container.innerHTML = `<div class="tile-grid">${categories.map(cat => `
+                <a class="admin-summary-tile admin-tile-${cat.replace('&','')} data-entry-category-tile" data-category="${cat}">
+                    <span class="admin-tile-title" style="font-size: 18px;">${cat}</span>
+                </a>
+            `).join('')}</div>`;
+        }
+
+        async function renderDataEntryCategoryDetail(container, category, dateString) {
+            const approvalsSnapshot = await db.collection('approvals')
+                .where('date', '==', dateString)
+                .where('category', '==', category)
+                .get();
+            
+            if (approvalsSnapshot.empty) {
+                container.innerHTML = `<div class="empty-state"><p>No approved orders for ${category} on this date.</p></div>`;
+                return;
+            }
+
+            const approvedVendors = [...new Set(approvalsSnapshot.docs.map(doc => doc.data().vendor))];
+
+            container.innerHTML = `<div class="drilldown-header">Approved Vendors for ${category}</div>
+                <ul class="item-list">${approvedVendors.map(vendor => `
+                    <li class="list-item data-entry-vendor-tile" data-vendor="${vendor}">
+                        <span class="list-item-title">${vendor}</span>
+                    </li>`).join('')}</ul>`;
+        }
+
+        async function renderDataEntryVendorDetail(container, category, vendor, dateString) {
+            const pos = await getPOsByVendor(category, vendor, dateString);
+            const allItems = await getItemsForCategory(category);
+            const allItemsMap = new Map(allItems.map(i => [i['Item Code'], i]));
+            const productSummary = {};
+            
+            pos.forEach(po => {
+                po.items.forEach(item => {
+                    if (!productSummary[item.itemCode]) {
+                        const originalItem = allItemsMap.get(item.itemCode);
+                        productSummary[item.itemCode] = { 
+                            name: item.itemName, 
+                            mrp: originalItem ? parseFloat(originalItem.MRP || 0) : 0, 
+                            qty: 0 
+                        };
+                    }
+                    productSummary[item.itemCode].qty += item.qty;
+                });
+            });
+            
+            container.innerHTML = `
+                <div class="drilldown-header">
+                    <span>Products from ${vendor}</span>
+                    <button class="btn btn-success" id="downloadExcelBtn" data-category="${category}" data-vendor="${vendor}" data-date="${dateString}"><i class="material-icons" style="font-size: 18px; vertical-align: middle; margin-right: 5px;">download</i>Download Excel</button>
+                </div>
+                <div class="detail-table-wrapper"><table class="detail-table">
+                    <thead><tr><th>S.No.</th><th>Item Name</th><th class="text-right">MRP</th><th class="text-center">Quantity</th></tr></thead>
+                    <tbody>${Object.values(productSummary).map((item, index) => `<tr><td>${index+1}</td><td>${item.name}</td><td class="text-right">₹${item.mrp.toFixed(2)}</td><td class="text-center">${item.qty}</td></tr>`).join('')}</tbody>
+                </table></div>`;
+        }
+        
+        async function generatePDF(category, vendor, dateString) {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            
+            const pos = await getPOsByVendor(category, vendor, dateString);
+            if (pos.length === 0) { alert('No data found to generate PDF.'); return; }
+            const allItems = await getItemsForCategory(category);
+            const allItemsMap = new Map(allItems.map(i => [i['Item Code'], i]));
+            const productSummary = {};
+            let poNumberForPDF = pos[0].poNumber || 'N/A';
+
+            pos.forEach(po => {
+                po.items.forEach(item => {
+                    if (!productSummary[item.itemCode]) {
+                        const originalItem = allItemsMap.get(item.itemCode);
+                        productSummary[item.itemCode] = { 
+                            name: item.itemName, mrp: originalItem ? parseFloat(originalItem.MRP || 0) : 0, qty: 0 
+                        };
+                    }
+                    productSummary[item.itemCode].qty += item.qty;
+                });
+            });
+            
+            const tableData = Object.values(productSummary).map((item, index) => [
+                index + 1, item.name, item.mrp.toFixed(2), item.qty,
+            ]);
+            
+            doc.setFontSize(20); doc.text("Purchase Order", 14, 22);
+            doc.setFontSize(12); doc.text("From: Metro Fresh", 14, 32);
+            doc.setFontSize(14); doc.setFont("helvetica", "bold"); doc.text(`Bill To: ${vendor}`, 14, 45);
+            doc.setFontSize(10); doc.setFont("helvetica", "normal");
+            doc.text(`PO Date: ${formatDisplayDate(dateString)}`, 140, 45);
+            doc.text(`PO Number: ${poNumberForPDF}`, 140, 50);
+
+            doc.autoTable({
+                head: [['S.No.', 'Item Name', 'MRP', 'Quantity']], body: tableData, startY: 60,
+                headStyles: { fillColor: [41, 128, 185], textColor: 255 },
+                alternateRowStyles: { fillColor: [245, 245, 245] },
+            });
+
+            doc.save(`PO_${vendor}_${dateString}.pdf`);
+        }
+
+        async function generateExcel(category, vendor, dateString) {
+            const pos = await getPOsByVendor(category, vendor, dateString);
+            if (pos.length === 0) { alert('No data found to generate Excel.'); return; }
+            const allItems = await getItemsForCategory(category);
+            const allItemsMap = new Map(allItems.map(i => [i['Item Code'], i]));
+            const productSummary = {};
+
+            pos.forEach(po => {
+                po.items.forEach(item => {
+                    if (!productSummary[item.itemCode]) {
+                        const originalItem = allItemsMap.get(item.itemCode);
+                        productSummary[item.itemCode] = { 
+                            name: item.itemName, mrp: originalItem ? parseFloat(originalItem.MRP || 0) : 0, qty: 0 
+                        };
+                    }
+                    productSummary[item.itemCode].qty += item.qty;
+                });
+            });
+
+            const excelData = Object.values(productSummary).map((item, index) => ({
+                'S.No.': index + 1, 'Item Name': item.name, 'MRP': item.mrp, 'Quantity': item.qty,
+            }));
+
+            const worksheet = XLSX.utils.json_to_sheet(excelData);
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, "Approved Order");
+            XLSX.writeFile(workbook, `DE_${vendor}_${dateString}.xlsx`);
+        }
+
+
+        document.body.addEventListener('click', async (e) => {
+            const tile = e.target.closest('.tile');
+            if (tile) { 
+                e.preventDefault(); 
+                AppState.currentDate = new Date(); 
+                AppState.adminDrilldown = []; 
+                AppState.dataEntryDrilldown = [];
+                await navigateTo(tile.dataset.page, { category: tile.dataset.category }); 
+            }
+            
+            if (e.target.closest('.back-btn')) await goBack();
+            if (e.target.closest('#addPoBtn')) await navigateTo('newOrderPage');
+            if (e.target.closest('#addVoucherBtn')) showModal('newVoucherModal');
+
+            if (e.target.closest('[data-close-modal]') || e.target.id === 'calendarModal') {
+                hideModal(e.target.closest('.modal').id);
+            }
+            
+            const adminCatTile = e.target.closest('.admin-category-tile');
+            if (adminCatTile) { AppState.adminDrilldown.push(adminCatTile.dataset.category); await renderAdminPage(); }
+            
+            const adminVendorTile = e.target.closest('.admin-vendor-tile');
+            if (adminVendorTile) { AppState.adminDrilldown.push(adminVendorTile.dataset.vendor); await renderAdminPage(); }
+            
+            const dataEntryCatTile = e.target.closest('.data-entry-category-tile');
+            if (dataEntryCatTile) { AppState.dataEntryDrilldown.push(dataEntryCatTile.dataset.category); await renderDataEntryPage(); }
+
+            const dataEntryVendorTile = e.target.closest('.data-entry-vendor-tile');
+            if (dataEntryVendorTile) { AppState.dataEntryDrilldown.push(dataEntryVendorTile.dataset.vendor); await renderDataEntryPage(); }
+
+            const searchItem = e.target.closest('.product-search-item');
+            if (searchItem) {
+                const itemId = searchItem.dataset.itemId;
+                // --- PERFORMANCE FIX: Get item from cache instead of DB
+                const itemToAdd = AppState.itemCache.find(i => i.id === itemId);
+
+                if (itemToAdd && !AppState.newPO.items.some(i => i.itemCode === itemToAdd['Item Code'])) {
+                    AppState.newPO.items.push({ 
+                        itemCode: itemToAdd['Item Code'], itemName: itemToAdd['Item Name'], cost: parseFloat(itemToAdd.Cost || 0), qty: 1 
+                    });
+                    renderCurrentPOItems();
+                    updatePOTotal();
+                    document.getElementById('productSearch').value = '';
+                    document.getElementById('productSearchResults').innerHTML = '';
+                } else if (itemToAdd) {
+                    alert('Item is already in the order.');
+                }
+            }
+            
+            const removeItemBtn = e.target.closest('.po-item-remove');
+            if (removeItemBtn) {
+                AppState.newPO.items.splice(parseInt(removeItemBtn.dataset.index), 1);
+                renderCurrentPOItems();
+                updatePOTotal();
+            }
+
+            const saveVoucherBtn = e.target.closest('#saveVoucherBtn');
+            if (saveVoucherBtn) {
+                const header = document.getElementById('voucherHeader').value.trim();
+                const amount = parseFloat(document.getElementById('voucherAmount').value);
+                if (!header || isNaN(amount) || amount <= 0) { alert('Please enter a valid header and amount.'); return; }
+                const newVoucher = { 
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp(), date: toLocalDateString(new Date()), header, amount 
+                };
+                
+                try {
+                    await db.collection('vouchers').add(newVoucher);
+                    document.getElementById('voucherHeader').value = '';
+                    document.getElementById('voucherAmount').value = '';
+                    hideModal('newVoucherModal');
+                    await renderVoucherList();
+                    alert('Voucher saved successfully!');
+                } catch (error) { console.error("Error saving voucher: ", error); alert("Failed to save voucher."); }
+            }
+
+            if (e.target.closest('#settingsBtn')) {
+                loadLogoPreview();
+                showModal('settingsModal');
+            }
+            
+            const approveBtn = e.target.closest('#approveBtn');
+            if (approveBtn) {
+                const key = approveBtn.dataset.key;
+                const [date, category, ...vendorParts] = key.split('-');
+                const vendor = vendorParts.join('-').replace(/_/g, ' ');
+                await db.collection('approvals').doc(key).set({
+                    approvedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    date, category, vendor
+                });
+                await renderAdminPage(); 
+            }
+
+            const downloadPdfBtn = e.target.closest('#downloadPdfBtn');
+            if (downloadPdfBtn) {
+                const { category, vendor, date } = downloadPdfBtn.dataset;
+                await generatePDF(category, vendor, date);
+            }
+
+            const downloadExcelBtn = e.target.closest('#downloadExcelBtn');
+            if (downloadExcelBtn) {
+                const { category, vendor, date } = downloadExcelBtn.dataset;
+                await generateExcel(category, vendor, date);
+            }
+
+            const deleteBtn = e.target.closest('#deleteOrderBtn');
+            if (deleteBtn) {
+                if (confirm('Are you sure you want to delete all orders for this vendor on this date? This action cannot be undone.')) {
+                    const { category, vendor, date } = deleteBtn.dataset;
+                    
+                    const posToDeleteSnapshot = await db.collection('purchaseOrders')
+                        .where('category', '==', category).where('vendor', '==', vendor).where('date', '==', date).get();
+
+                    const batch = db.batch();
+                    posToDeleteSnapshot.docs.forEach(doc => batch.delete(doc.ref));
+                    
+                    const approvalKey = `${date}-${category}-${vendor.replace(/\s+/g, '_')}`;
+                    const approvalRef = db.collection('approvals').doc(approvalKey);
+                    batch.delete(approvalRef);
+                    
+                    await batch.commit();
+                    alert('Orders and approval deleted successfully.');
+                    await goBack();
+                }
+            }
+        });
+        
+        document.body.addEventListener('input', e => {
+            const qtyInput = e.target.closest('.po-item-qty');
+            if (qtyInput) {
+                const index = parseInt(qtyInput.dataset.index);
+                const newQty = parseInt(qtyInput.value) || 0;
+                if (AppState.newPO.items[index]) {
+                    AppState.newPO.items[index].qty = newQty;
+                    updatePOTotal();
+                }
+            }
+        });
+
+        const handleFileUpload = (file, onComplete) => {
+            if (!file) return;
+            Papa.parse(file, { header: true, skipEmptyLines: true, complete: res => onComplete(res.data), error: err => alert('CSV Error: ' + err.message) });
+        };
+        
+        document.getElementById('vendorFileUpload').addEventListener('change', e => {
+            handleFileUpload(e.target.files[0], async (data) => {
+                const batch = db.batch();
+                data.forEach(vendor => {
+                    if (vendor.Customer) {
+                         const docRef = db.collection('vendors').doc();
+                         batch.set(docRef, vendor);
+                    }
+                });
+                await batch.commit();
+                alert(`Uploaded ${data.length} vendors to Firestore.`);
+            });
+        });
+
+        document.querySelectorAll('.item-upload').forEach(input => {
+            input.addEventListener('change', e => {
+                const category = e.target.dataset.category;
+                handleFileUpload(e.target.files[0], async (data) => {
+                    const batch = db.batch();
+                    data.forEach(item => {
+                         if (item['Item Code'] && item['Item Name']) {
+                            const docRef = db.collection('items').doc();
+                            batch.set(docRef, { ...item, category: category });
+                         }
+                    });
+                    await batch.commit();
+                    alert(`Uploaded ${data.length} items for ${category} to Firestore.`);
+                });
+            });
+        });
+        
+        // --- PERFORMANCE FIX: Debounce the search input
+        const debouncedSearch = debounce((event) => renderProductSearchResults(event.target.value));
+        document.getElementById('productSearch').addEventListener('keyup', debouncedSearch);
+        
+        document.getElementById('vendorSelect').addEventListener('change', e => AppState.newPO.vendor = e.target.value);
+        
+        document.getElementById('savePoBtn').addEventListener('click', async () => {
+            const { vendor, items, total } = AppState.newPO;
+            if (!vendor) return alert('Please select a vendor.');
+            if (items.length === 0) return alert('Please add items to the order.');
+            
+            const counterRef = db.collection('counters').doc('poCounter');
+            let newPoNumber;
+
+            try {
+                await db.runTransaction(async (transaction) => {
+                    const counterDoc = await transaction.get(counterRef);
+                    if (!counterDoc.exists) {
+                        transaction.set(counterRef, { count: 1 });
+                        newPoNumber = 'PO-0001';
+                    } else {
+                        const newCount = counterDoc.data().count + 1;
+                        transaction.update(counterRef, { count: newCount });
+                        newPoNumber = `PO-${newCount.toString().padStart(4, '0')}`;
+                    }
+                });
+
+                const newPO = { 
+                    poNumber: newPoNumber, category: AppState.currentCategory, timestamp: firebase.firestore.FieldValue.serverTimestamp(), 
+                    date: toLocalDateString(new Date()), vendor, items, total 
+                };
+
+                await db.collection('purchaseOrders').add(newPO);
+                await goBack();
+                alert(`Purchase Order ${newPoNumber} saved successfully!`);
+
+            } catch (error) { console.error("Error creating PO: ", error); alert("Failed to save Purchase Order."); }
+        });
+
+        function loadLogoPreview() {
+            const logoData = localStorage.getItem('appLogo');
+            AppState.appLogo = logoData;
+            const logoPreview = document.getElementById('logoPreview');
+            const noLogoText = document.getElementById('noLogoText');
+            if (logoData) {
+                logoPreview.src = logoData;
+                logoPreview.style.display = 'inline-block';
+                noLogoText.style.display = 'none';
+            } else {
+                logoPreview.style.display = 'none';
+                noLogoText.style.display = 'block';
+            }
+        }
+        loadLogoPreview();
+        
+        document.getElementById('logoUpload').addEventListener('change', e => {
+            const file = e.target.files[0];
+            if (!file || !file.type.startsWith('image/')) { alert('Please select a valid image file.'); return; }
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                const logoDataUrl = event.target.result;
+                localStorage.setItem('appLogo', logoDataUrl);
+                loadLogoPreview();
+                alert('Logo updated!');
+            };
+            reader.readAsDataURL(file);
+        });
+
+    });
+    // Register Service Worker for PWA functionality
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js').then(registration => {
+            console.log('ServiceWorker registration successful with scope: ', registration.scope);
+        }, err => {
+            console.log('ServiceWorker registration failed: ', err);
+        });
+    });
+}
+</script>
+
+</body>
+</html>
