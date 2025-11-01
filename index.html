@@ -36,7 +36,7 @@
             --info-color: #17a2b8;
             --fv-color: #9C27B0;
             --voucher-color: #E91E63;
-            --data-entry-color: #009688;
+            --promoter-items-color: #009688;
             --lemongrass-green: #8BC34A;
             --light-color: #f8f9fa;
             --dark-color: #343a40;
@@ -200,7 +200,7 @@
         .tile-HWP .material-icons { color: var(--info-color); }
         .tile-FV .material-icons { color: var(--fv-color); }
         .tile-VOUCHER .material-icons { color: var(--voucher-color); }
-        .tile-DATA-ENTRY .material-icons { color: var(--data-entry-color); }
+        .tile-PROMOTER-ITEMS .material-icons { color: var(--promoter-items-color); }
         .tile-ADMIN .material-icons { color: var(--danger-color); }
         .tile span {
             font-weight: 500;
@@ -392,6 +392,8 @@
         .admin-tile-HWP { border-top-color: var(--info-color); }
         .admin-tile-FV { border-top-color: var(--fv-color); }
         .admin-tile-VOUCHER { border-top-color: var(--voucher-color); }
+        .admin-tile-PROMOTER-ITEMS { border-top-color: var(--promoter-items-color); }
+        
         .drilldown-header {
             display: flex;
             align-items: center;
@@ -469,6 +471,13 @@
         .empty-state .material-icons { font-size: 64px; margin-bottom: 16px; }
         .empty-state p { font-size: 18px; }
 
+        #newOrderPage .content {
+            overflow-y: hidden;
+        }
+        .product-search-grid {
+            overflow-y: auto;
+        }
+        
         .search-container {
             display: flex;
             align-items: center;
@@ -585,6 +594,64 @@
             display: flex;
             flex-direction: column;
         }
+        
+        .brand-filter-container {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background-color: var(--card-bg);
+            border-radius: var(--border-radius);
+            padding: 8px;
+            box-shadow: var(--shadow);
+        }
+        #brandFilterContainer {
+            scroll-behavior: smooth;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            overflow-x: auto;
+            flex-grow: 1;
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        #brandFilterContainer::-webkit-scrollbar {
+            display: none;
+        }
+        .brand-pill {
+            flex-shrink: 0;
+            padding: 8px 16px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            border-radius: 18px;
+            background-color: #e9ecef;
+            color: var(--secondary-color);
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: background-color 0.2s, color 0.2s;
+        }
+        .brand-pill.active {
+            background-color: var(--primary-color);
+            color: white;
+        }
+        .scroll-arrow {
+            height: 28px;
+            width: 28px;
+            background-color: transparent;
+            border: 1.5px solid var(--secondary-color);
+            border-radius: 50%;
+            flex-shrink: 0;
+            display: none;
+            padding: 4px;
+        }
+        .scroll-arrow .material-icons {
+            color: var(--secondary-color);
+            font-size: 18px;
+        }
+        .scroll-arrow:hover {
+            background-color: #f0f0f0;
+        }
 
         #adminContent .tile-grid {
             display: grid;
@@ -617,12 +684,12 @@
                 aspect-ratio: auto;
             }
             
-            #dataEntryPage .tile-grid {
-                grid-template-columns: repeat(3, 1fr);
-            }
-
             .product-search-grid {
                 grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .scroll-arrow {
+                display: flex;
             }
 
             .header { padding: 16px 32px; }
@@ -655,7 +722,7 @@
                     <a class="tile tile-HWP" data-page="categoryPage" data-category="HWP"><i class="material-icons">home</i><span>HWP</span></a>
                     <a class="tile tile-FV" data-page="categoryPage" data-category="F&V"><i class="material-icons">grass</i><span>F&V</span></a>
                     <a class="tile tile-VOUCHER" data-page="voucherPage"><i class="material-icons">receipt_long</i><span>VOUCHER</span></a>
-                    <a class="tile tile-DATA-ENTRY" data-page="dataEntryPage"><i class="material-icons">edit_note</i><span>Data Entry</span></a>
+                    <a class="tile tile-PROMOTER-ITEMS" data-page="categoryPage" data-category="PROMOTER ITEMS"><i class="material-icons">campaign</i><span>PROMOTER ITEMS</span></a>
                     <a class="tile tile-ADMIN" data-page="adminPage"><i class="material-icons">admin_panel_settings</i><span>ADMIN</span></a>
                 </div>
             </div>
@@ -702,6 +769,15 @@
                     <input type="text" id="vendorSearch" class="form-control" placeholder="Type to search vendors...">
                     <div id="vendorSearchResults" class="search-results-list"></div>
                 </div>
+                
+                <div class="form-group" id="brandFilterWrapper">
+                    <label>Filter by Brand</label>
+                    <div class="brand-filter-container">
+                        <button class="icon-button scroll-arrow" id="scroll-left-btn"><i class="material-icons">chevron_left</i></button>
+                        <div id="brandFilterContainer"></div>
+                        <button class="icon-button scroll-arrow" id="scroll-right-btn"><i class="material-icons">chevron_right</i></button>
+                    </div>
+                </div>
 
                 <div class="form-group">
                     <label for="productSearch">Search for Products</label>
@@ -727,22 +803,8 @@
                 </div>
             </div>
             <div class="content" id="adminContent">
-                <div id="adminProgressBarContainer"></div>
-                <div id="adminDashboardContainer"></div>
+                <!-- Admin content is rendered dynamically here -->
             </div>
-        </div>
-
-        <div id="dataEntryPage" class="page">
-            <div class="header">
-                <div class="header-side left">
-                    <button class="icon-button back-btn"><i class="material-icons">arrow_back</i></button>
-                </div>
-                <div class="title" id="dataEntryTitle">Data Entry</div>
-                <div class="header-side right">
-                    <button class="icon-button calendar-btn"><i class="material-icons">calendar_today</i></button>
-                </div>
-            </div>
-            <div class="content" id="dataEntryContent"></div>
         </div>
 
         <div id="voucherPage" class="page">
@@ -797,6 +859,7 @@
                 <div class="form-group"><label>REPACK</label><input type="file" class="form-control item-upload" data-category="REPACK" accept=".csv"></div>
                 <div class="form-group"><label>HWP</label><input type="file" class="form-control item-upload" data-category="HWP" accept=".csv"></div>
                 <div class="form-group"><label>F&V</label><input type="file" class="form-control item-upload" data-category="F&V" accept=".csv"></div>
+                <div class="form-group"><label>PROMOTER ITEMS</label><input type="file" class="form-control item-upload" data-category="PROMOTER ITEMS" accept=".csv"></div>
             </div>
         </div>
     </div>
@@ -942,6 +1005,18 @@
             };
         }
 
+        function getCategoryIcon(category) {
+            switch (category) {
+                case 'FOOD': return 'shopping_basket';
+                case 'NONFOOD': return 'inventory_2';
+                case 'REPACK': return 'restart_alt';
+                case 'HWP': return 'home';
+                case 'F&V': return 'grass';
+                case 'PROMOTER ITEMS': return 'campaign';
+                default: return 'label';
+            }
+        }
+
         async function navigateTo(pageId, context = {}, addToHistory = true) {
             allPages.forEach(p => p.classList.remove('active'));
             const targetPage = document.getElementById(pageId);
@@ -950,12 +1025,10 @@
                 if (addToHistory && AppState.history[AppState.history.length - 1] !== pageId) {
                     AppState.history.push(pageId);
                 }
-                
                 if (pageId === 'categoryPage') await renderCategoryPage(context.category);
                 if (pageId === 'adminPage') await renderAdminPage();
                 if (pageId === 'newOrderPage') await renderNewOrderPage(context.poId);
                 if (pageId === 'voucherPage') await renderVoucherPage();
-                if (pageId === 'dataEntryPage') await renderDataEntryPage();
             }
         }
 
@@ -971,22 +1044,12 @@
                 }
                 return;
             }
-            if (currentPage === 'dataEntryPage') {
-                if (AppState.dataEntryDrilldown.length > 0) {
-                    AppState.dataEntryDrilldown.pop();
-                    await renderDataEntryPage();
-                } else {
-                    navigateTo('loginPage', {}, false);
-                    AppState.history = ['loginPage'];
-                }
-                return;
-            }
             if (currentPage === 'newOrderPage') {
                 AppState.itemCache = [];
                 AppState.vendorCache = [];
                 AppState.editingPoId = null;
+                AppState.selectedBrand = 'All';
             }
-
             if (AppState.history.length > 1) {
                 AppState.history.pop();
                 await navigateTo(AppState.history[AppState.history.length - 1], { category: AppState.currentCategory }, false);
@@ -1006,7 +1069,7 @@
             const config = { fps: 10, qrbox: { width: 250, height: 250 } };
             const qrCodeSuccessCallback = (decodedText, decodedResult) => {
                 stopScanner();
-                const foundItem = AppState.itemCache.find(item => item['EAN Code'] === decodedText);
+                const foundItem = AppState.itemCache.find(item => item['EAN Code'] === decodedText || item['EAN code'] === decodedText);
                 if (foundItem) {
                     document.getElementById('productSearchResultsGrid').innerHTML = `
                         <div class="product-card">
@@ -1014,10 +1077,10 @@
                                 <span class="item-name">${foundItem['Item Name']}</span>
                                 <span class="item-mrp">MRP: ₹${parseFloat(foundItem.MRP || 0).toFixed(2)}</span>
                             </div>
-                            <form class="product-card-actions" data-item-id="${foundItem.id}" data-item-name="${foundItem['Item Name']}" data-item-code="${foundItem['Item Code']}" data-default-cost="${parseFloat(foundItem.Cost || 0)}">
+                            <form class="product-card-actions" data-item-id="${foundItem.id}" data-item-name="${foundItem['Item Name']}" data-item-code="${foundItem['Item Code']}" data-default-cost="${parseFloat(foundItem.Cost || foundItem['Purchase Cost'] || 0)}">
                                 <div class="input-group">
                                     <label for="cost-${foundItem.id}">Cost</label>
-                                    <input type="number" id="cost-${foundItem.id}" class="form-control cost-input" value="${parseFloat(foundItem.Cost || 0).toFixed(2)}" readonly>
+                                    <input type="number" id="cost-${foundItem.id}" class="form-control cost-input" value="${parseFloat(foundItem.Cost || foundItem['Purchase Cost'] || 0).toFixed(2)}" readonly>
                                 </div>
                                 <div class="input-group">
                                     <label for="qty-${foundItem.id}">QTY</label>
@@ -1066,7 +1129,7 @@
         }
 
         async function updateDraftPO() {
-            if (!AppState.currentCategory || !AppState.newPO.vendor || AppState.editingPoId) return; // Don't save drafts when editing
+            if (!AppState.currentCategory || !AppState.newPO.vendor || AppState.editingPoId) return;
             const draftId = `${AppState.currentCategory}-${AppState.newPO.vendor}`;
             const draftData = {
                 category: AppState.currentCategory, vendor: AppState.newPO.vendor, items: AppState.newPO.items, total: AppState.newPO.total,
@@ -1124,23 +1187,40 @@
             const adminContent = document.getElementById('adminContent');
             const adminTitle = document.getElementById('adminTitle');
             const dateString = toLocalDateString(AppState.currentDate);
+
+            // Get references to the header buttons within the admin page
+            const calendarBtn = document.querySelector('#adminPage .calendar-btn');
+            const settingsBtn = document.getElementById('settingsBtn');
+
+            adminContent.innerHTML = '';
             
             if (drilldownLevel === 0) {
                 adminTitle.textContent = 'Admin';
-                await renderAdminDashboard(adminContent, dateString);
+                // Show buttons on the main dashboard
+                if (calendarBtn) calendarBtn.style.display = 'flex';
+                if (settingsBtn) settingsBtn.style.display = 'flex';
+                await renderAdminDashboard(dateString);
+
             } else if (drilldownLevel === 1) {
                 adminTitle.textContent = AppState.adminDrilldown[0];
+                // Also show buttons on the category/vendor list view
+                if (calendarBtn) calendarBtn.style.display = 'flex';
+                if (settingsBtn) settingsBtn.style.display = 'flex';
                 await renderAdminCategoryDetail(adminContent, AppState.adminDrilldown[0], dateString);
+
             } else if (drilldownLevel === 2) {
                 adminTitle.textContent = "PO Details";
-                await renderAdminVendorDetail(adminContent, AppState.adminDrilldown[0], AppState.adminDrilldown[1], dateString);
+                // --- THIS IS THE FIX ---
+                // Hide the buttons when viewing a specific PO's details
+                if (calendarBtn) calendarBtn.style.display = 'none';
+                if (settingsBtn) settingsBtn.style.display = 'none';
+                await renderAdminVendorDetail(adminContent, AppState.adminDrilldown[0], AppState.adminDrilldown[1]);
             }
         }
 
-                function updateAdminProgressBar(total) {
+        function updateAdminProgressBar(total) {
             const max = 400000;
             const percentage = Math.min((total / max) * 100, 100);
-            // Return the HTML as a string instead of trying to set it
             return `
                 <div class="progress-container">
                     <div class="progress-bar">
@@ -1150,12 +1230,11 @@
                 </div>`;
         }
         
-        async function renderAdminDashboard(container, dateString) {
+        async function renderAdminDashboard(dateString) {
             const allPOs = await getAllPOsForDate(dateString);
             const allVouchers = await getVouchersForDate(dateString);
-            const categories = ['FOOD', 'NONFOOD', 'REPACK', 'HWP', 'F&V'];
+            const categories = ['FOOD', 'NONFOOD', 'REPACK', 'HWP', 'F&V', 'PROMOTER ITEMS'];
             let totals = { ALL: 0, ...Object.fromEntries(categories.map(cat => [cat, 0])) };
-
             categories.forEach(cat => {
                 totals[cat] = allPOs.filter(po => po.category === cat).reduce((sum, po) => sum + po.total, 0);
                 totals.ALL += totals[cat];
@@ -1163,16 +1242,15 @@
             const voucherTotal = allVouchers.reduce((sum, v) => sum + v.amount, 0);
             totals.ALL += voucherTotal;
             
-            // Get the HTML for the progress bar
-            const progressBarHTML = updateAdminProgressBar(totals.ALL);
+            const adminContent = document.getElementById('adminContent');
+            adminContent.innerHTML = updateAdminProgressBar(totals.ALL) + `<div id="adminDashboardContainer"></div>`;
             
-            // Combine the progress bar and the dashboard tiles, and render into the single correct container
-            container.innerHTML = progressBarHTML + `<div class="tile-grid">
+            document.getElementById('adminDashboardContainer').innerHTML = `<div class="tile-grid">
                 <div class="admin-summary-tile admin-total-tile" style="background-color: var(--dark-color); cursor: default;">
                     <span class="admin-tile-title" style="color: white;">TOTAL</span>
                     <span class="admin-tile-amount" style="color: white;">₹${totals.ALL.toFixed(2)}</span>
                 </div>
-                ${categories.map(cat => `<a class="admin-summary-tile admin-tile-${cat.replace('&', '')} admin-category-tile" data-category="${cat}">
+                ${categories.map(cat => `<a class="admin-summary-tile admin-tile-${cat.replace(/\s+/g, '-')} admin-category-tile" data-category="${cat}">
                     <span class="admin-tile-title">${cat}</span>
                     <span class="admin-tile-amount">₹${(totals[cat] || 0).toFixed(2)}</span>
                 </a>`).join('')}
@@ -1182,6 +1260,7 @@
                 </a>
             </div>`;
         }
+
         async function renderAdminCategoryDetail(container, category, dateString) {
              if (category === 'VOUCHER') {
                 const vouchers = await getVouchersForDate(dateString);
@@ -1217,9 +1296,10 @@
                     </li>`).join('')}</ul>`;
         }
         
-        async function renderAdminVendorDetail(container, category, poId, dateString) {
+        async function renderAdminVendorDetail(container, category, poId) {
             if (category === 'VOUCHER') {
                 const vendorOrHeader = poId;
+                const dateString = toLocalDateString(AppState.currentDate);
                 const snapshot = await db.collection('vouchers').where('date', '==', dateString).where('header', '==', vendorOrHeader).get();
                 const vouchers = snapshot.docs.map(doc => doc.data());
                 container.innerHTML = `<div class="drilldown-header">Vouchers for ${vendorOrHeader}</div>
@@ -1300,14 +1380,11 @@
             const pageTitle = document.getElementById('poPageTitle');
             const saveBtn = document.getElementById('savePoBtn');
             const vendorSearch = document.getElementById('vendorSearch');
-
             AppState.editingPoId = editingPoId;
             document.getElementById('productSearch').value = '';
             document.getElementById('vendorSearchResults').innerHTML = '';
             document.getElementById('productSearchResultsGrid').innerHTML = `<div class="empty-state"><i class="material-icons">search</i><p>Start typing to find products</p></div>`;
-            
             if (editingPoId) {
-                // EDIT MODE
                 pageTitle.textContent = "Edit Purchase Order";
                 saveBtn.textContent = "Update PO";
                 const poDoc = await db.collection('purchaseOrders').doc(editingPoId).get();
@@ -1318,39 +1395,48 @@
                     vendorSearch.disabled = true;
                 }
             } else {
-                // NEW PO MODE
                 pageTitle.textContent = "New Purchase Order";
                 saveBtn.textContent = "Save PO";
                 AppState.newPO = { vendor: null, items: [], total: 0 };
                 vendorSearch.value = '';
                 vendorSearch.disabled = false;
             }
-
             updateCartBadge();
             updatePOTotal();
-            
             const vendorsSnapshot = await db.collection('vendors').orderBy('Customer').get();
             AppState.vendorCache = vendorsSnapshot.docs.map(doc => doc.data());
-            
             document.getElementById('productSearch').placeholder = "Loading items...";
             AppState.itemCache = await getItemsForCategory(AppState.currentCategory);
+            renderBrandFilters();
             document.getElementById('productSearch').placeholder = "Type to search or scan...";
         }
         
+        function renderBrandFilters() {
+            const container = document.getElementById('brandFilterContainer');
+            const brands = [...new Set(AppState.itemCache.map(item => item.BRAND || 'Unbranded'))].sort();
+            container.innerHTML = `<div class="brand-pill active" data-brand="All">All</div>` + 
+                brands.map(brand => `<div class="brand-pill" data-brand="${brand}">${brand}</div>`).join('');
+        }
+
         function renderProductSearchResults(query) {
             const container = document.getElementById('productSearchResultsGrid');
-            if (!query || query.length < 2) { 
+            let items = AppState.itemCache;
+            if (AppState.selectedBrand !== 'All') {
+                items = items.filter(item => (item.BRAND || 'Unbranded') === AppState.selectedBrand);
+            }
+            if (!query && AppState.selectedBrand === 'All') { 
                 container.innerHTML = `<div class="empty-state"><i class="material-icons">search</i><p>Start typing to find products</p></div>`; 
                 return;
             }
-            const items = AppState.itemCache;
-            const filteredItems = items.filter(item => item['Item Name'] && item['Item Name'].toLowerCase().includes(query.toLowerCase())).slice(0, 50);
+            const filteredItems = (query && query.length >= 2) 
+                ? items.filter(item => item['Item Name'] && item['Item Name'].toLowerCase().includes(query.toLowerCase()))
+                : items;
             if (filteredItems.length === 0) {
                 container.innerHTML = `<div class="empty-state"><i class="material-icons">search_off</i><p>No products found</p></div>`;
                 return;
             }
             container.innerHTML = filteredItems.map(item => {
-                const defaultCost = parseFloat(item.Cost || 0);
+                const defaultCost = parseFloat(item.Cost || item['Purchase Cost'] || 0);
                 return `
                 <div class="product-card">
                     <div class="product-card-header">
@@ -1424,34 +1510,119 @@
                 </div></div>`;
             showModal('calendarModal');
         }
-
-        async function renderDataEntryPage() {
-            // ... (code unchanged)
-        }
         
         async function generatePDF(poId) {
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
+            const pageWidth = doc.internal.pageSize.getWidth();
+            const pageHeight = doc.internal.pageSize.getHeight();
+            const margin = 14;
+            
             const poDoc = await db.collection('purchaseOrders').doc(poId).get();
-            if (!poDoc.exists) { alert('Could not find order to generate PDF.'); return; }
+            if (!poDoc.exists) { 
+                alert('Could not find order to generate PDF.'); 
+                return; 
+            }
+            
             const po = poDoc.data();
             const tableData = po.items.map((item, index) => [ index + 1, item.itemName, item.qty ]);
-            doc.setFontSize(20); doc.text("Purchase Order", 14, 22);
-            doc.setFontSize(12); doc.text("From: Metro Fresh", 14, 32);
-            doc.setFontSize(14); doc.setFont("helvetica", "bold"); doc.text(`Bill To: ${po.vendor}`, 14, 45);
-            doc.setFontSize(10); doc.setFont("helvetica", "normal");
-            doc.text(`PO Date: ${formatDisplayDate(po.date)}`, 140, 45);
-            doc.text(`PO Number: ${po.poNumber}`, 140, 50);
-            doc.autoTable({
-                head: [['S.No.', 'Item Name', 'Quantity']], body: tableData, startY: 60,
-                headStyles: { fillColor: [41, 128, 185], textColor: 255 },
-                alternateRowStyles: { fillColor: [245, 245, 245] },
-            });
-            doc.save(`PO_${po.vendor}_${po.date}.pdf`);
-        }
 
-        async function generateExcel(category, vendor, dateString) {
-            // ... (code unchanged)
+            // --- START: FINAL PDF LAYOUT ---
+
+            const lemongrassGreen = '#8BC34A';
+            const textColor = '#212529';
+            const secondaryColor = '#6c757d';
+
+            // -- 1. TOP HEADER SECTION --
+            const topY = 10;
+
+            // Add Logo (Top Right)
+            const logoData = localStorage.getItem('appLogo');
+            if (logoData) {
+                try {
+                    const logoWidth = 40;
+                    const logoHeight = 20;
+                    const logoX = pageWidth - logoWidth - margin; 
+                    doc.addImage(logoData, 'PNG', logoX, topY, logoWidth, logoHeight);
+                } catch (e) {
+                    console.error("Error adding logo to PDF:", e);
+                }
+            }
+
+            // Document Title (Top Left, Vertically Centered with Logo)
+            doc.setFontSize(22);
+            doc.setFont("helvetica", "bold");
+            doc.setTextColor(textColor);
+            doc.text("Purchase Order", margin, topY + 12); // Aligned to the vertical middle of the logo space
+
+            // --- 2. MIDDLE INFORMATION BLOCK (Compact) ---
+            const middleY = topY + 25; // Reduced space
+            const rightAlignX = pageWidth - margin;
+
+            // "From" Line
+            doc.setFontSize(11);
+            doc.setFont("helvetica", "normal");
+            doc.setTextColor(secondaryColor);
+            doc.text("From:", margin, middleY);
+            doc.setFont("helvetica", "bold");
+            doc.setTextColor(textColor);
+            doc.text("Metro Fresh", margin + 12, middleY);
+
+            // "Bill To" Line
+            doc.setFont("helvetica", "normal");
+            doc.setTextColor(secondaryColor);
+            doc.text("Bill To:", margin, middleY + 7);
+            doc.setFont("helvetica", "bold");
+            doc.setTextColor(textColor);
+            doc.text(po.vendor, margin + 15, middleY + 7);
+            
+            // PO Details (Right-aligned with From/To)
+            doc.setFontSize(10);
+            doc.setFont("helvetica", "bold");
+            doc.setTextColor(secondaryColor);
+            doc.text("PO Number:", rightAlignX - 40, middleY, { align: 'left' });
+            doc.text("PO Date:", rightAlignX - 40, middleY + 7, { align: 'left' });
+            doc.setFont("helvetica", "normal");
+            doc.setTextColor(textColor);
+            doc.text(po.poNumber, rightAlignX, middleY, { align: 'right' });
+            doc.text(formatDisplayDate(po.date), rightAlignX, middleY + 7, { align: 'right' });
+            
+            // --- 3. SEPARATOR LINE ---
+            const lineY = middleY + 15;
+            doc.setDrawColor(222, 226, 230);
+            doc.setLineWidth(0.5);
+            doc.line(margin, lineY, pageWidth - margin, lineY);
+
+            // --- 4. TABLE STYLING ---
+            doc.autoTable({
+                head: [['S.No.', 'Item Name', 'Quantity']], 
+                body: tableData, 
+                startY: lineY + 5, // Start table immediately after the line
+                theme: 'grid',
+                headStyles: { 
+                    fillColor: lemongrassGreen,
+                    textColor: [255, 255, 255],
+                    fontSize: 10,
+                    halign: 'center'
+                },
+                styles: {
+                    fontSize: 9,
+                    cellPadding: 1.5,
+                },
+                columnStyles: {
+                    0: { halign: 'center', cellWidth: 20 },
+                    1: { halign: 'left' },
+                    2: { halign: 'center', cellWidth: 30 }
+                },
+                didDrawPage: (data) => {
+                    const footerText = "Thank you for your business!";
+                    doc.setFontSize(10);
+                    doc.setTextColor(secondaryColor);
+                    doc.text(footerText, margin, pageHeight - 10);
+                }
+            });
+
+            doc.save(`PO_${po.vendor}_${po.date}.pdf`);
         }
 
         document.body.addEventListener('click', async (e) => {
@@ -1459,12 +1630,24 @@
                 const poId = e.target.closest('#editOrderBtn').dataset.poId;
                 await navigateTo('newOrderPage', { poId: poId });
             }
+            const brandPill = e.target.closest('.brand-pill');
+            if(brandPill) {
+                document.querySelectorAll('.brand-pill').forEach(p => p.classList.remove('active'));
+                brandPill.classList.add('active');
+                AppState.selectedBrand = brandPill.dataset.brand;
+                renderProductSearchResults(document.getElementById('productSearch').value);
+            }
+            if (e.target.closest('#scroll-left-btn')) {
+                document.getElementById('brandFilterContainer').scrollLeft -= 200;
+            }
+            if (e.target.closest('#scroll-right-btn')) {
+                document.getElementById('brandFilterContainer').scrollLeft += 200;
+            }
             const tile = e.target.closest('.tile');
             if (tile) { 
                 e.preventDefault(); 
                 AppState.currentDate = new Date(); 
                 AppState.adminDrilldown = []; 
-                AppState.dataEntryDrilldown = [];
                 await navigateTo(tile.dataset.page, { category: tile.dataset.category }); 
             }
             if (e.target.closest('.back-btn')) await goBack();
@@ -1480,7 +1663,6 @@
                     case 'categoryPage': await renderCategoryPage(AppState.currentCategory); break;
                     case 'adminPage': await renderAdminPage(); break;
                     case 'voucherPage': await renderVoucherPage(); break;
-                    case 'dataEntryPage': await renderDataEntryPage(); break;
                 }
             }
             if (e.target.closest('#addPoBtn')) await navigateTo('newOrderPage');
@@ -1497,10 +1679,6 @@
             if (adminVendorTile) { AppState.adminDrilldown.push(adminVendorTile.dataset.vendor); await renderAdminPage(); }
             const adminPOTile = e.target.closest('.admin-po-tile');
             if (adminPOTile) { AppState.adminDrilldown.push(adminPOTile.dataset.poId); await renderAdminPage(); }
-            const dataEntryCatTile = e.target.closest('.data-entry-category-tile');
-            if (dataEntryCatTile) { AppState.dataEntryDrilldown.push(dataEntryCatTile.dataset.category); await renderDataEntryPage(); }
-            const dataEntryVendorTile = e.target.closest('.data-entry-vendor-tile');
-            if (dataEntryVendorTile) { AppState.dataEntryDrilldown.push(dataEntryVendorTile.dataset.vendor); await renderDataEntryPage(); }
             const poListItem = e.target.closest('.list-item[data-po-id]');
             if (poListItem) {
                 const poId = poListItem.dataset.poId;
@@ -1535,11 +1713,22 @@
                 AppState.newPO.items.splice(parseInt(removeItemBtn.dataset.index), 1);
                 renderCartModal();
                 updateCartBadge();
-                await updateDraftPO();
+                if (!AppState.editingPoId) await updateDraftPO();
             }
             const saveVoucherBtn = e.target.closest('#saveVoucherBtn');
             if (saveVoucherBtn) {
-                // ... (code unchanged)
+                const header = document.getElementById('voucherHeader').value.trim();
+                const amount = parseFloat(document.getElementById('voucherAmount').value);
+                if (!header || isNaN(amount) || amount <= 0) { alert('Please enter a valid header and amount.'); return; }
+                const newVoucher = { timestamp: firebase.firestore.FieldValue.serverTimestamp(), date: toLocalDateString(new Date()), header, amount };
+                try {
+                    await db.collection('vouchers').add(newVoucher);
+                    document.getElementById('voucherHeader').value = '';
+                    document.getElementById('voucherAmount').value = '';
+                    hideModal('newVoucherModal');
+                    if(AppState.history.includes('voucherPage')) await renderVoucherList();
+                    alert('Voucher saved successfully!');
+                } catch (error) { console.error("Error saving voucher: ", error); alert("Failed to save voucher."); }
             }
             if (e.target.closest('#settingsBtn')) { loadLogoPreview(); showModal('settingsModal'); }
             const approveBtn = e.target.closest('#approveBtn');
@@ -1556,8 +1745,6 @@
             }
             const downloadPdfBtn = e.target.closest('#downloadPdfBtn');
             if (downloadPdfBtn) { await generatePDF(downloadPdfBtn.dataset.poId); }
-            const downloadExcelBtn = e.target.closest('#downloadExcelBtn');
-            if (downloadExcelBtn) { /* ... (code unchanged) ... */ }
             const deleteBtn = e.target.closest('#deleteOrderBtn');
             if (deleteBtn) {
                 if (confirm('Are you sure you want to delete this specific order? This action cannot be undone.')) {
@@ -1624,17 +1811,12 @@
         document.getElementById('vendorFileUpload').addEventListener('change', e => {
             handleFileUpload(e.target.files[0], async (data) => {
                 const batch = db.batch();
-                data.forEach(vendor => {
-                    if (vendor.Customer) {
-                         const docRef = db.collection('vendors').doc();
-                         batch.set(docRef, vendor);
-                    }
-                });
+                data.forEach(vendor => { if (vendor.Customer) { batch.set(db.collection('vendors').doc(), vendor); } });
                 await batch.commit();
                 alert(`Uploaded ${data.length} vendors to Firestore.`);
             });
         });
-
+        
         document.querySelectorAll('.item-upload').forEach(input => {
             input.addEventListener('change', e => {
                 const category = e.target.dataset.category;
@@ -1642,8 +1824,8 @@
                     const batch = db.batch();
                     data.forEach(item => {
                          if (item['Item Code'] && item['Item Name']) {
-                            const docRef = db.collection('items').doc();
-                            batch.set(docRef, { ...item, category: category });
+                            const cost = parseFloat(item.Cost || item['Purchase Cost'] || 0);
+                            batch.set(db.collection('items').doc(), { ...item, Cost: cost, category: category });
                          }
                     });
                     await batch.commit();
@@ -1662,17 +1844,15 @@
             const { vendor, items, total } = AppState.newPO;
             if (!vendor) return alert('Please select a vendor.');
             if (items.length === 0) return alert('Please add items to the order.');
-            
             try {
                 if (AppState.editingPoId) {
-                    // UPDATE EXISTING PO
                     const poRef = db.collection('purchaseOrders').doc(AppState.editingPoId);
                     await poRef.update({ items: items, total: total });
                     hideModal('cartModal');
-                    await goBack(); // This will clear the editing state
+                    AppState.editingPoId = null;
+                    await goBack();
                     alert(`Purchase Order updated successfully!`);
                 } else {
-                    // CREATE NEW PO
                     const counterRef = db.collection('counters').doc('poCounter');
                     let newPoNumber;
                     await db.runTransaction(async (transaction) => {
@@ -1728,7 +1908,7 @@
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('./sw.js').then(registration => {
-                    console.log('ServiceWorker registration successful with scope: ', registration.scope);
+                    console.log('ServiceWorker registration successful');
                 }, err => {
                     console.log('ServiceWorker registration failed: ', err);
                 });
