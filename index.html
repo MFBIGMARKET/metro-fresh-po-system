@@ -631,7 +631,15 @@
 </head>
 <body>
 
-    <div id="appContainer">
+    <div id="locationBlocker" style="position:fixed; top:0; left:0; width:100%; height:100%; background-color:var(--background-color); z-index:9999; display:flex; justify-content:center; align-items:center;">
+        <div class="empty-state">
+            <i class="material-icons">location_off</i>
+            <p>Access Denied</p>
+            <p style="font-size:14px; margin-top:10px;">This app can only be used within the supermarket premises.</p>
+        </div>
+    </div>
+
+    <div id="appContainer" style="display: none;">
         <div id="loginPage" class="page active">
             <div class="login-container">
                 <div class="login-header">
@@ -877,6 +885,49 @@
             itemCache: [],
             vendorCache: []
         };
+        
+        const SUPERMARKET_LAT = 11.99026695842943;
+        const SUPERMARKET_LON = 75.67567445952561;
+        const ALLOWED_RADIUS_METERS = 1000;
+
+        function getDistance(lat1, lon1, lat2, lon2) {
+            const R = 6371e3;
+            const φ1 = lat1 * Math.PI/180;
+            const φ2 = lat2 * Math.PI/180;
+            const Δφ = (lat2-lat1) * Math.PI/180;
+            const Δλ = (lon2-lon1) * Math.PI/180;
+            const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) + Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ/2) * Math.sin(Δλ/2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+            return R * c;
+        }
+
+        function checkLocationAndInitializeApp() {
+            const blocker = document.getElementById('locationBlocker');
+            const appContainer = document.getElementById('appContainer');
+
+            if (!navigator.geolocation) {
+                blocker.querySelector('p').textContent = "Geolocation is not supported by your browser.";
+                return;
+            }
+
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    const userLat = position.coords.latitude;
+                    const userLon = position.coords.longitude;
+                    const distance = getDistance(SUPERMARKET_LAT, SUPERMARKET_LON, userLat, userLon);
+
+                    if (distance <= ALLOWED_RADIUS_METERS) {
+                        blocker.style.display = 'none';
+                        appContainer.style.display = 'block';
+                    } else {
+                        // Blocker is already visible by default
+                    }
+                },
+                () => {
+                    blocker.querySelector('p').textContent = "Location access was denied. Please enable location services to use the app.";
+                }
+            );
+        }
 
         const allPages = document.querySelectorAll('.page');
         
@@ -1009,6 +1060,42 @@
             hideModal('scannerModal');
         }
 
+        async function loadDraftPO() {
+            if (!AppState.currentCategory || !AppState.newPO.vendor) return;
+            const draftId = `${AppState.currentCategory}-${AppState.newPO.vendor}`;
+            const draftDoc = await db.collection('draftPOs').doc(draftId).get();
+
+            if (draftDoc.exists) {
+                const draftData = draftDoc.data();
+                AppState.newPO.items = draftData.items || [];
+                AppState.newPO.total = draftData.total || 0;
+            } else {
+                AppState.newPO.items = [];
+                AppState.newPO.total = 0;
+            }
+            updateCartBadge();
+            updatePOTotal();
+        }
+
+        async function updateDraftPO() {
+            if (!AppState.currentCategory || !AppState.newPO.vendor) return;
+            const draftId = `${AppState.currentCategory}-${AppState.newPO.vendor}`;
+            const draftData = {
+                category: AppState.currentCategory,
+                vendor: AppState.newPO.vendor,
+                items: AppState.newPO.items,
+                total: AppState.newPO.total,
+                lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
+            };
+            await db.collection('draftPOs').doc(draftId).set(draftData);
+        }
+
+        async function clearDraftPO() {
+            if (!AppState.currentCategory || !AppState.newPO.vendor) return;
+            const draftId = `${AppState.currentCategory}-${AppState.newPO.vendor}`;
+            await db.collection('draftPOs').doc(draftId).delete();
+        }
+
         function toLocalDateString(date) {
             const year = date.getFullYear();
             const month = (date.getMonth() + 1).toString().padStart(2, '0');
@@ -1023,41 +1110,27 @@
         }
 
         async function getPOsForDate(category, dateString) {
-            const snapshot = await db.collection('purchaseOrders')
-                .where('category', '==', category)
-                .where('date', '==', dateString)
-                .get();
+            const snapshot = await db.collection('purchaseOrders').where('category', '==', category).where('date', '==', dateString).get();
             return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         }
         
         async function getPOsByVendor(category, vendor, dateString) {
-             const snapshot = await db.collection('purchaseOrders')
-                .where('category', '==', category)
-                .where('vendor', '==', vendor)
-                .where('date', '==', dateString)
-                .get();
+             const snapshot = await db.collection('purchaseOrders').where('category', '==', category).where('vendor', '==', vendor).where('date', '==', dateString).get();
             return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         }
 
         async function getVouchersForDate(dateString) {
-            const snapshot = await db.collection('vouchers')
-                .where('date', '==', dateString)
-                .orderBy('timestamp', 'desc')
-                .get();
+            const snapshot = await db.collection('vouchers').where('date', '==', dateString).orderBy('timestamp', 'desc').get();
             return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         }
 
         async function getAllPOsForDate(dateString) {
-             const snapshot = await db.collection('purchaseOrders')
-                .where('date', '==', dateString)
-                .get();
+             const snapshot = await db.collection('purchaseOrders').where('date', '==', dateString).get();
             return snapshot.docs.map(doc => doc.data());
         }
 
         async function getItemsForCategory(category) {
-            const snapshot = await db.collection('items')
-                .where('category', '==', category)
-                .get();
+            const snapshot = await db.collection('items').where('category', '==', category).get();
             return snapshot.docs.map(doc => ({id: doc.id, ...doc.data()}));
         }
         
@@ -1087,18 +1160,13 @@
         async function renderAdminDashboard(container, dateString) {
             const allPOs = await getAllPOsForDate(dateString);
             const allVouchers = await getVouchersForDate(dateString);
-
             const categories = ['FOOD', 'NONFOOD', 'REPACK', 'HWP', 'F&V'];
             let totals = { ALL: 0, ...Object.fromEntries(categories.map(cat => [cat, 0])) };
 
             categories.forEach(cat => {
-                const categoryTotal = allPOs
-                    .filter(po => po.category === cat)
-                    .reduce((sum, po) => sum + po.total, 0);
-                totals[cat] = categoryTotal;
-                totals.ALL += categoryTotal;
+                totals[cat] = allPOs.filter(po => po.category === cat).reduce((sum, po) => sum + po.total, 0);
+                totals.ALL += totals[cat];
             });
-            
             const voucherTotal = allVouchers.reduce((sum, v) => sum + v.amount, 0);
             totals.ALL += voucherTotal;
             
@@ -1137,14 +1205,11 @@
                         </li>`).join('')}</ul>`;
                 return;
             }
-
             const pos = await getPOsForDate(category, dateString);
-
             if (pos.length === 0) {
                 container.innerHTML = `<div class="empty-state"><i class="material-icons">info</i><p>No orders for ${category} on this date.</p></div>`;
                 return;
             }
-
             container.innerHTML = `<div class="drilldown-header">Purchase Orders for ${category}</div>
                 <ul class="item-list">${pos.map(po => `
                     <li class="list-item admin-po-tile" data-po-id="${po.id}">
@@ -1168,20 +1233,16 @@
                     </table></div>`;
                 return;
             }
-
             const poDoc = await db.collection('purchaseOrders').doc(poId).get();
             if (!poDoc.exists) {
                 container.innerHTML = `<div class="empty-state"><p>Error: Purchase Order not found.</p></div>`;
                 return;
             }
             const po = poDoc.data();
-            
             const isApproved = await getApprovalStatus(poId);
-            
             const actionButtonHTML = isApproved
                 ? `<button class="btn btn-success" id="downloadPdfBtn" data-po-id="${poId}"><i class="material-icons" style="font-size: 18px; vertical-align: middle; margin-right: 5px;">picture_as_pdf</i>Download PDF</button>`
                 : `<button class="btn btn-primary" id="approveBtn" data-po-id="${poId}"><i class="material-icons" style="font-size: 18px; vertical-align: middle; margin-right: 5px;">check_circle</i>Approve Order</button>`;
-
             container.innerHTML = `
                 <div class="drilldown-header">
                     <span>Details for ${po.poNumber} (${po.vendor})</span>
@@ -1208,7 +1269,6 @@
             const poListContainer = document.getElementById('poListContainer');
             const dateString = toLocalDateString(AppState.currentDate);
             const filteredPOs = await getPOsForDate(AppState.currentCategory, dateString);
-            
             poListContainer.innerHTML = filteredPOs.length === 0 
                 ? `<div class="empty-state"><i class="material-icons">inbox</i><p>No orders for today.</p></div>`
                 : `<ul class="item-list">${filteredPOs.map(po => `<li class="list-item" data-po-id="${po.id}"><div class="list-item-main"><span class="list-item-title">${po.vendor}</span><span class="list-item-subtitle">${po.poNumber} &bull; ${po.items.length} items</span></div><span class="list-item-amount">₹${po.total.toFixed(2)}</span></li>`).join('')}</ul>`;
@@ -1223,7 +1283,6 @@
             const container = document.getElementById('voucherListContainer');
             const dateString = toLocalDateString(AppState.currentDate);
             const filteredVouchers = await getVouchersForDate(dateString);
-
             container.innerHTML = filteredVouchers.length === 0
                 ? `<div class="empty-state"><i class="material-icons">receipt_long</i><p>No vouchers for today.</p></div>`
                 : `<ul class="item-list">${filteredVouchers.map(v => `<li class="list-item" style="cursor:default;"><span class="list-item-title">${v.header}</span><span class="list-item-amount">₹${v.amount.toFixed(2)}</span></li>`).join('')}</ul>`;
@@ -1234,10 +1293,8 @@
             const total = items.reduce((sum, item) => sum + (type === 'voucher' ? item.amount : item.total), 0);
             const max = 100000;
             const percentage = Math.min((total / max) * 100, 100);
-            
             const bar = document.getElementById(type === 'voucher' ? 'voucherProgressBar' : 'poProgressBar');
             const text = document.getElementById(type === 'voucher' ? 'voucherProgressText' : 'poProgressText');
-
             bar.style.width = `${percentage}%`;
             text.textContent = `₹${total.toFixed(0)} / ₹${max.toLocaleString()}`;
         }
@@ -1249,10 +1306,8 @@
             document.getElementById('vendorSearchResults').innerHTML = '';
             document.getElementById('productSearchResultsGrid').innerHTML = `<div class="empty-state"><i class="material-icons">search</i><p>Start typing to find products</p></div>`;
             updateCartBadge();
-            
             const vendorsSnapshot = await db.collection('vendors').orderBy('Customer').get();
             AppState.vendorCache = vendorsSnapshot.docs.map(doc => doc.data());
-            
             document.getElementById('productSearch').placeholder = "Loading items...";
             AppState.itemCache = await getItemsForCategory(AppState.currentCategory);
             document.getElementById('productSearch').placeholder = "Type to search or scan...";
@@ -1264,17 +1319,12 @@
                 container.innerHTML = `<div class="empty-state"><i class="material-icons">search</i><p>Start typing to find products</p></div>`; 
                 return;
             }
-            
             const items = AppState.itemCache;
-            const filteredItems = items
-                .filter(item => item['Item Name'] && item['Item Name'].toLowerCase().includes(query.toLowerCase()))
-                .slice(0, 50);
-
+            const filteredItems = items.filter(item => item['Item Name'] && item['Item Name'].toLowerCase().includes(query.toLowerCase())).slice(0, 50);
             if (filteredItems.length === 0) {
                 container.innerHTML = `<div class="empty-state"><i class="material-icons">search_off</i><p>No products found</p></div>`;
                 return;
             }
-
             container.innerHTML = filteredItems.map(item => {
                 const defaultCost = parseFloat(item.Cost || 0);
                 return `
@@ -1297,8 +1347,7 @@
                             <button type="submit" class="btn btn-primary add-item-btn">Add</button>
                         </div>
                     </form>
-                </div>
-                `;
+                </div>`;
             }).join('');
         }
         
@@ -1320,14 +1369,8 @@
         function renderVendorSearchResults(query) {
             const container = document.getElementById('vendorSearchResults');
             if (!query || query.length < 1) { container.innerHTML = ''; return; }
-
-            const filteredVendors = AppState.vendorCache
-                .filter(vendor => vendor.Customer && vendor.Customer.toLowerCase().includes(query.toLowerCase()))
-                .slice(0, 10);
-
-            container.innerHTML = filteredVendors.map(vendor => 
-                `<div class="vendor-search-item" data-vendor-name="${vendor.Customer}">${vendor.Customer}</div>`
-            ).join('');
+            const filteredVendors = AppState.vendorCache.filter(vendor => vendor.Customer && vendor.Customer.toLowerCase().includes(query.toLowerCase())).slice(0, 10);
+            container.innerHTML = filteredVendors.map(vendor => `<div class="vendor-search-item" data-vendor-name="${vendor.Customer}">${vendor.Customer}</div>`).join('');
         }
 
         const updatePOTotal = () => {
@@ -1341,7 +1384,6 @@
             const year = currentDate.getFullYear();
             const month = currentDate.getMonth();
             const monthName = currentDate.toLocaleString('default', { month: 'long' });
-
             container.innerHTML = `<div class="calendar">
                 <div class="calendar-header">
                     <button class="icon-button" id="prevMonth"><i class="material-icons">chevron_left</i></button>
@@ -1364,7 +1406,6 @@
             const container = document.getElementById('dataEntryContent');
             const title = document.getElementById('dataEntryTitle');
             const dateString = toLocalDateString(AppState.currentDate);
-            
             if (drilldownLevel === 0) {
                 title.textContent = 'Data Entry';
                 renderDataEntryDashboard(container);
@@ -1379,29 +1420,20 @@
         
         function renderDataEntryDashboard(container) {
             const categories = ['FOOD', 'NONFOOD', 'REPACK', 'HWP', 'F&V'];
-            container.innerHTML = `<div class="tile-grid">${categories.map(cat => `
-                <a class="admin-summary-tile admin-tile-${cat.replace('&','')} data-entry-category-tile" data-category="${cat}">
+            container.innerHTML = `<div class="tile-grid">${categories.map(cat => `<a class="admin-summary-tile admin-tile-${cat.replace('&','')} data-entry-category-tile" data-category="${cat}">
                     <span class="admin-tile-title" style="font-size: 18px;">${cat}</span>
-                </a>
-            `).join('')}</div>`;
+                </a>`).join('')}</div>`;
         }
 
         async function renderDataEntryCategoryDetail(container, category, dateString) {
-            const approvalsSnapshot = await db.collection('approvals')
-                .where('date', '==', dateString)
-                .where('category', '==', category)
-                .get();
-            
+            const approvalsSnapshot = await db.collection('approvals').where('date', '==', dateString).where('category', '==', category).get();
             if (approvalsSnapshot.empty) {
                 container.innerHTML = `<div class="empty-state"><p>No approved orders for ${category} on this date.</p></div>`;
                 return;
             }
-
             const approvedVendors = [...new Set(approvalsSnapshot.docs.map(doc => doc.data().vendor))];
-
             container.innerHTML = `<div class="drilldown-header">Approved Vendors for ${category}</div>
-                <ul class="item-list">${approvedVendors.map(vendor => `
-                    <li class="list-item data-entry-vendor-tile" data-vendor="${vendor}">
+                <ul class="item-list">${approvedVendors.map(vendor => `<li class="list-item data-entry-vendor-tile" data-vendor="${vendor}">
                         <span class="list-item-title">${vendor}</span>
                     </li>`).join('')}</ul>`;
         }
@@ -1411,23 +1443,16 @@
             const allItems = await getItemsForCategory(category);
             const allItemsMap = new Map(allItems.map(i => [i['Item Code'], i]));
             const productSummary = {};
-            
             pos.forEach(po => {
                 po.items.forEach(item => {
                     if (!productSummary[item.itemCode]) {
                         const originalItem = allItemsMap.get(item.itemCode);
-                        productSummary[item.itemCode] = { 
-                            name: item.itemName, 
-                            mrp: originalItem ? parseFloat(originalItem.MRP || 0) : 0, 
-                            qty: 0 
-                        };
+                        productSummary[item.itemCode] = { name: item.itemName, mrp: originalItem ? parseFloat(originalItem.MRP || 0) : 0, qty: 0 };
                     }
                     productSummary[item.itemCode].qty += item.qty;
                 });
             });
-            
-            container.innerHTML = `
-                <div class="drilldown-header">
+            container.innerHTML = `<div class="drilldown-header">
                     <span>Products from ${vendor}</span>
                     <button class="btn btn-success" id="downloadExcelBtn" data-category="${category}" data-vendor="${vendor}" data-date="${dateString}"><i class="material-icons" style="font-size: 18px; vertical-align: middle; margin-right: 5px;">download</i>Download Excel</button>
                 </div>
@@ -1440,39 +1465,21 @@
         async function generatePDF(poId) {
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
-            
             const poDoc = await db.collection('purchaseOrders').doc(poId).get();
-            if (!poDoc.exists) { 
-                alert('Could not find order to generate PDF.'); 
-                return; 
-            }
-            
+            if (!poDoc.exists) { alert('Could not find order to generate PDF.'); return; }
             const po = poDoc.data();
-
-            // FIX 1: The table data now only contains S.No, Item Name, and Quantity.
-            const tableData = po.items.map((item, index) => [
-                index + 1, 
-                item.itemName, 
-                item.qty
-            ]);
-            
+            const tableData = po.items.map((item, index) => [ index + 1, item.itemName, item.qty ]);
             doc.setFontSize(20); doc.text("Purchase Order", 14, 22);
             doc.setFontSize(12); doc.text("From: Metro Fresh", 14, 32);
             doc.setFontSize(14); doc.setFont("helvetica", "bold"); doc.text(`Bill To: ${po.vendor}`, 14, 45);
             doc.setFontSize(10); doc.setFont("helvetica", "normal");
             doc.text(`PO Date: ${formatDisplayDate(po.date)}`, 140, 45);
             doc.text(`PO Number: ${po.poNumber}`, 140, 50);
-
             doc.autoTable({
-                // FIX 2: The table header is now corrected to match the data.
-                head: [['S.No.', 'Item Name', 'Quantity']], 
-                body: tableData, 
-                startY: 60,
+                head: [['S.No.', 'Item Name', 'Quantity']], body: tableData, startY: 60,
                 headStyles: { fillColor: [41, 128, 185], textColor: 255 },
                 alternateRowStyles: { fillColor: [245, 245, 245] },
-                // FIX 3: The "didDrawPage" function that printed the Grand Total has been completely removed.
             });
-
             doc.save(`PO_${po.vendor}_${po.date}.pdf`);
         }
 
@@ -1482,23 +1489,18 @@
             const allItems = await getItemsForCategory(category);
             const allItemsMap = new Map(allItems.map(i => [i['Item Code'], i]));
             const productSummary = {};
-
             pos.forEach(po => {
                 po.items.forEach(item => {
                     if (!productSummary[item.itemCode]) {
                         const originalItem = allItemsMap.get(item.itemCode);
-                        productSummary[item.itemCode] = { 
-                            name: item.itemName, mrp: originalItem ? parseFloat(originalItem.MRP || 0) : 0, qty: 0 
-                        };
+                        productSummary[item.itemCode] = { name: item.itemName, mrp: originalItem ? parseFloat(originalItem.MRP || 0) : 0, qty: 0 };
                     }
                     productSummary[item.itemCode].qty += item.qty;
                 });
             });
-
             const excelData = Object.values(productSummary).map((item, index) => ({
                 'S.No.': index + 1, 'Item Name': item.name, 'MRP': item.mrp, 'Quantity': item.qty,
             }));
-
             const worksheet = XLSX.utils.json_to_sheet(excelData);
             const workbook = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(workbook, worksheet, "Approved Order");
@@ -1515,7 +1517,6 @@
                 AppState.dataEntryDrilldown = [];
                 await navigateTo(tile.dataset.page, { category: tile.dataset.category }); 
             }
-            
             if (e.target.closest('.back-btn')) await goBack();
             if (e.target.closest('.calendar-btn')) { renderCalendar(); }
             if (e.target.closest('#prevMonth')) { AppState.currentDate.setMonth(AppState.currentDate.getMonth() - 1); renderCalendar(); }
@@ -1532,38 +1533,24 @@
                     case 'dataEntryPage': await renderDataEntryPage(); break;
                 }
             }
-            
             if (e.target.closest('#addPoBtn')) await navigateTo('newOrderPage');
             if (e.target.closest('#addVoucherBtn')) showModal('newVoucherModal');
-
             if (e.target.closest('[data-close-modal]')) {
                 const modalId = e.target.closest('.modal').id;
-                if (modalId === 'scannerModal') {
-                    stopScanner();
-                } else {
-                    hideModal(modalId);
-                }
+                if (modalId === 'scannerModal') { stopScanner(); } 
+                else { hideModal(modalId); }
             }
-            
-            if (e.target.closest('#scan-btn')) {
-                await startScanner();
-            }
-
+            if (e.target.closest('#scan-btn')) { await startScanner(); }
             const adminCatTile = e.target.closest('.admin-category-tile');
             if (adminCatTile) { AppState.adminDrilldown.push(adminCatTile.dataset.category); await renderAdminPage(); }
-            
             const adminVendorTile = e.target.closest('.admin-vendor-tile');
             if (adminVendorTile) { AppState.adminDrilldown.push(adminVendorTile.dataset.vendor); await renderAdminPage(); }
-            
             const adminPOTile = e.target.closest('.admin-po-tile');
             if (adminPOTile) { AppState.adminDrilldown.push(adminPOTile.dataset.poId); await renderAdminPage(); }
-
             const dataEntryCatTile = e.target.closest('.data-entry-category-tile');
             if (dataEntryCatTile) { AppState.dataEntryDrilldown.push(dataEntryCatTile.dataset.category); await renderDataEntryPage(); }
-
             const dataEntryVendorTile = e.target.closest('.data-entry-vendor-tile');
             if (dataEntryVendorTile) { AppState.dataEntryDrilldown.push(dataEntryVendorTile.dataset.vendor); await renderDataEntryPage(); }
-            
             const poListItem = e.target.closest('.list-item[data-po-id]');
             if (poListItem) {
                 const poId = poListItem.dataset.poId;
@@ -1584,36 +1571,28 @@
                     showModal('poDetailsModal');
                 } catch (error) { console.error("Failed to fetch PO details:", error); alert("An error occurred while fetching the PO details."); }
             }
-
-            if (e.target.closest('#cart-btn')) {
-                renderCartModal();
-                showModal('cartModal');
-            }
-
+            if (e.target.closest('#cart-btn')) { renderCartModal(); showModal('cartModal'); }
             const vendorItem = e.target.closest('.vendor-search-item');
             if (vendorItem) {
                 const vendorName = vendorItem.dataset.vendorName;
                 AppState.newPO.vendor = vendorName;
                 document.getElementById('vendorSearch').value = vendorName;
                 document.getElementById('vendorSearchResults').innerHTML = '';
+                await loadDraftPO();
             }
-            
             const removeItemBtn = e.target.closest('.po-item-remove');
             if (removeItemBtn) {
                 AppState.newPO.items.splice(parseInt(removeItemBtn.dataset.index), 1);
                 renderCartModal();
                 updateCartBadge();
+                await updateDraftPO();
             }
-
             const saveVoucherBtn = e.target.closest('#saveVoucherBtn');
             if (saveVoucherBtn) {
                 const header = document.getElementById('voucherHeader').value.trim();
                 const amount = parseFloat(document.getElementById('voucherAmount').value);
                 if (!header || isNaN(amount) || amount <= 0) { alert('Please enter a valid header and amount.'); return; }
-                const newVoucher = { 
-                    timestamp: firebase.firestore.FieldValue.serverTimestamp(), date: toLocalDateString(new Date()), header, amount 
-                };
-                
+                const newVoucher = { timestamp: firebase.firestore.FieldValue.serverTimestamp(), date: toLocalDateString(new Date()), header, amount };
                 try {
                     await db.collection('vouchers').add(newVoucher);
                     document.getElementById('voucherHeader').value = '';
@@ -1623,12 +1602,7 @@
                     alert('Voucher saved successfully!');
                 } catch (error) { console.error("Error saving voucher: ", error); alert("Failed to save voucher."); }
             }
-
-            if (e.target.closest('#settingsBtn')) {
-                loadLogoPreview();
-                showModal('settingsModal');
-            }
-            
+            if (e.target.closest('#settingsBtn')) { loadLogoPreview(); showModal('settingsModal'); }
             const approveBtn = e.target.closest('#approveBtn');
             if (approveBtn) {
                 const poId = approveBtn.dataset.poId;
@@ -1636,28 +1610,18 @@
                 if(poDoc.exists) {
                     const poData = poDoc.data();
                     await db.collection('approvals').doc(poId).set({
-                        approvedAt: firebase.firestore.FieldValue.serverTimestamp(),
-                        date: poData.date,
-                        category: poData.category,
-                        vendor: poData.vendor,
-                        poNumber: poData.poNumber
+                        approvedAt: firebase.firestore.FieldValue.serverTimestamp(), date: poData.date, category: poData.category, vendor: poData.vendor, poNumber: poData.poNumber
                     });
                     await renderAdminPage(); 
                 }
             }
-
             const downloadPdfBtn = e.target.closest('#downloadPdfBtn');
-            if (downloadPdfBtn) {
-                const poId = downloadPdfBtn.dataset.poId;
-                await generatePDF(poId);
-            }
-
+            if (downloadPdfBtn) { await generatePDF(downloadPdfBtn.dataset.poId); }
             const downloadExcelBtn = e.target.closest('#downloadExcelBtn');
             if (downloadExcelBtn) {
                 const { category, vendor, date } = downloadExcelBtn.dataset;
                 await generateExcel(category, vendor, date);
             }
-
             const deleteBtn = e.target.closest('#deleteOrderBtn');
             if (deleteBtn) {
                 if (confirm('Are you sure you want to delete this specific order? This action cannot be undone.')) {
@@ -1674,7 +1638,7 @@
             }
         });
         
-        document.body.addEventListener('input', e => {
+        document.body.addEventListener('input', async (e) => {
             const qtyInput = e.target.closest('.po-item-qty');
             if (qtyInput) {
                 const index = parseInt(qtyInput.dataset.index);
@@ -1682,38 +1646,33 @@
                 if (AppState.newPO.items[index]) {
                     AppState.newPO.items[index].qty = newQty;
                     updatePOTotal();
+                    await updateDraftPO();
                 }
             }
         });
         
-        document.getElementById('productSearchResultsGrid').addEventListener('submit', (e) => {
+        document.getElementById('productSearchResultsGrid').addEventListener('submit', async (e) => {
             e.preventDefault();
             const form = e.target;
             if (!form.classList.contains('product-card-actions')) return;
-
             const itemName = form.dataset.itemName;
             const itemCode = form.dataset.itemCode;
             const finalCost = parseFloat(form.dataset.defaultCost);
             const qtyInput = form.querySelector('.qty-input');
             const qty = parseInt(qtyInput.value) || 1;
-
             const existingItem = AppState.newPO.items.find(i => i.itemCode === itemCode && i.cost === finalCost);
-
             if (existingItem) {
                 existingItem.qty += qty;
             } else {
-                AppState.newPO.items.push({ 
-                    itemCode: itemCode, itemName: itemName, cost: finalCost, qty: qty 
-                });
+                AppState.newPO.items.push({ itemCode: itemCode, itemName: itemName, cost: finalCost, qty: qty });
             }
             updateCartBadge();
-            
+            await updateDraftPO();
             qtyInput.value = '1';
             const addButton = form.querySelector('.add-item-btn');
             addButton.textContent = 'Added!';
             addButton.classList.remove('btn-primary');
             addButton.classList.add('btn-success');
-            
             setTimeout(() => {
                 addButton.textContent = 'Add';
                 addButton.classList.remove('btn-success');
@@ -1767,10 +1726,8 @@
             const { vendor, items, total } = AppState.newPO;
             if (!vendor) return alert('Please select a vendor.');
             if (items.length === 0) return alert('Please add items to the order.');
-            
             const counterRef = db.collection('counters').doc('poCounter');
             let newPoNumber;
-
             try {
                 await db.runTransaction(async (transaction) => {
                     const counterDoc = await transaction.get(counterRef);
@@ -1783,22 +1740,12 @@
                         newPoNumber = `PO-${newCount.toString().padStart(4, '0')}`;
                     }
                 });
-
-                const newPO = { 
-                    poNumber: newPoNumber, 
-                    category: AppState.currentCategory, 
-                    timestamp: firebase.firestore.FieldValue.serverTimestamp(), 
-                    date: toLocalDateString(new Date()), 
-                    vendor, 
-                    items, 
-                    total 
-                };
-
+                const newPO = { poNumber: newPoNumber, category: AppState.currentCategory, timestamp: firebase.firestore.FieldValue.serverTimestamp(), date: toLocalDateString(new Date()), vendor, items, total };
                 await db.collection('purchaseOrders').add(newPO);
+                await clearDraftPO();
                 hideModal('cartModal');
                 await goBack();
                 alert(`Purchase Order ${newPoNumber} saved successfully!`);
-
             } catch (error) { console.error("Error creating PO: ", error); alert("Failed to save Purchase Order."); }
         });
 
@@ -1840,6 +1787,8 @@
                 });
             });
         }
+        
+        checkLocationAndInitializeApp();
     });
 </script>
 
