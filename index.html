@@ -33,11 +33,11 @@
             --info-color: #17a2b8;
             --fv-color: #9C27B0;
             --voucher-color: #E91E63;
-            --data-entry-color: #009688; /* Teal for Data Entry */
-            --lemongrass-green: #8BC34A; /* Lemongrass Green */
+            --data-entry-color: #009688;
+            --lemongrass-green: #8BC34A;
             --light-color: #f8f9fa;
             --dark-color: #343a40;
-            --background-color: #FDF5E6; /* Subtle Beige Background */
+            --background-color: #FDF5E6;
             --text-color: #212529;
             --card-bg: #ffffff;
             --shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
@@ -127,6 +127,8 @@
         }
 
         .content {
+            display: flex;
+            flex-direction: column;
             flex-grow: 1;
             padding: 16px;
             overflow-y: auto;
@@ -316,46 +318,7 @@
             flex-shrink: 0;
         }
         
-        #newOrderPage .content {
-            padding-bottom: 80px;
-        }
-        .page-footer {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            background-color: var(--card-bg);
-            padding: 16px;
-            box-shadow: 0 -2px 8px rgba(0,0,0,0.1);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            z-index: 10;
-        }
         .footer-total { font-size: 18px; font-weight: 600; }
-        .product-search-item {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 12px;
-            border-bottom: 1px solid #eee;
-            background-color: var(--card-bg);
-            cursor: pointer;
-            transition: background-color 0.2s;
-        }
-        .product-search-item:hover { background-color: #f8f9fa; }
-        .product-search-item:first-child { border-top-left-radius: 8px; border-top-right-radius: 8px; }
-        .product-search-item:last-child { border-bottom: none; border-bottom-left-radius: 8px; border-bottom-right-radius: 8px; }
-        .product-search-item .item-name { flex-grow: 1; font-size: 15px; pointer-events: none; }
-        .product-search-item .item-mrp {
-            flex-shrink: 0;
-            min-width: 70px;
-            text-align: right;
-            color: var(--secondary-color);
-            font-weight: 500;
-            font-size: 14px;
-            pointer-events: none;
-        }
 
         .form-group { margin-bottom: 16px; }
         .form-group label { display: block; margin-bottom: 8px; font-weight: 500; }
@@ -502,6 +465,122 @@
         .empty-state .material-icons { font-size: 64px; margin-bottom: 16px; }
         .empty-state p { font-size: 18px; }
 
+        .search-container {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .search-container .form-control {
+            flex-grow: 1;
+        }
+        .search-container .icon-button {
+            flex-shrink: 0;
+            border: 1px solid #ced4da;
+            border-radius: 8px;
+            height: 48px;
+            width: 48px;
+        }
+        .search-results-list {
+            position: relative;
+            width: 100%;
+            z-index: 100;
+        }
+        .vendor-search-item {
+            padding: 12px;
+            background-color: var(--card-bg);
+            border: 1px solid #eee;
+            border-top: none;
+            cursor: pointer;
+        }
+        .vendor-search-item:hover {
+            background-color: #f0f0f0;
+        }
+
+        #cart-btn {
+            position: relative;
+        }
+        .cart-badge {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background-color: var(--danger-color);
+            color: white;
+            border-radius: 50%;
+            width: 18px;
+            height: 18px;
+            font-size: 11px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid white;
+        }
+        
+        .product-search-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 16px;
+            padding-top: 10px;
+            flex-grow: 1;
+        }
+
+        .product-card {
+            background-color: var(--card-bg);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            padding: 16px;
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 12px;
+        }
+        .product-card-header {
+            grid-column: 1 / -1;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+        .product-card-header .item-name {
+            font-weight: 600;
+            font-size: 16px;
+        }
+        .product-card-header .item-mrp {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--danger-color);
+            flex-shrink: 0;
+            padding-left: 10px;
+        }
+        .product-card-actions {
+            grid-column: 1 / -1;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            align-items: flex-end;
+        }
+        .product-card-actions .form-control {
+            padding: 8px;
+            font-size: 14px;
+            text-align: center;
+        }
+        .product-card-actions .cost-input[readonly] {
+            background-color: #e9ecef;
+            cursor: not-allowed;
+        }
+        .product-card-actions .btn {
+            padding: 8px 16px;
+            font-size: 14px;
+        }
+        .product-card-actions label {
+            font-size: 11px;
+            color: var(--secondary-color);
+            text-align: center;
+            margin-bottom: 4px;
+        }
+        .input-group {
+            display: flex;
+            flex-direction: column;
+        }
+
         #adminContent .tile-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
@@ -535,6 +614,10 @@
             
             #dataEntryPage .tile-grid {
                 grid-template-columns: repeat(3, 1fr);
+            }
+
+            .product-search-grid {
+                grid-template-columns: repeat(2, 1fr);
             }
 
             .header { padding: 16px 32px; }
@@ -593,24 +676,29 @@
                     <button class="icon-button back-btn"><i class="material-icons">arrow_back</i></button>
                 </div>
                 <div class="title">New Purchase Order</div>
-                <div class="header-side right"></div>
+                <div class="header-side right">
+                    <button class="icon-button" id="cart-btn">
+                        <i class="material-icons">shopping_cart</i>
+                        <span class="cart-badge" id="cart-badge">0</span>
+                    </button>
+                </div>
             </div>
             <div class="content">
                 <div class="form-group">
-                    <label for="vendorSelect">Select Vendor</label>
-                    <select id="vendorSelect" class="form-select"></select>
+                    <label for="vendorSearch">Search for Vendor</label>
+                    <input type="text" id="vendorSearch" class="form-control" placeholder="Type to search vendors...">
+                    <div id="vendorSearchResults" class="search-results-list"></div>
                 </div>
+
                 <div class="form-group">
-                    <label for="productSearch">Search & Tap to Add Products</label>
-                    <input type="text" id="productSearch" class="form-control" placeholder="Type to search...">
+                    <label for="productSearch">Search for Products</label>
+                    <div class="search-container">
+                        <input type="text" id="productSearch" class="form-control" placeholder="Type to search or scan...">
+                        <button class="icon-button" id="scan-btn"><i class="material-icons">qr_code_scanner</i></button>
+                    </div>
                 </div>
-                <div id="productSearchResults" style="margin-top: 8px;"></div>
-                <h4 style="margin-top: 24px; margin-bottom: 12px;">Order Items</h4>
-                <div id="currentPoItems"></div>
-            </div>
-            <div class="page-footer">
-                <div class="footer-total">Total: <span id="poTotalAmount">₹0.00</span></div>
-                <button class="btn btn-primary" id="savePoBtn">Save PO</button>
+                <div id="productSearchResultsGrid" class="product-search-grid">
+                </div>
             </div>
         </div>
 
@@ -664,6 +752,7 @@
         </div>
     </div>
 
+    <!-- Modals -->
     <div id="settingsModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
@@ -676,7 +765,6 @@
                     <input type="file" id="vendorFileUpload" class="form-control" accept=".csv">
                 </div>
                 <hr style="margin: 20px 0;">
-
                 <div class="form-group">
                     <label for="logoUpload">Upload Company Logo</label>
                     <input type="file" id="logoUpload" class="form-control" accept="image/*">
@@ -687,7 +775,6 @@
                     </div>
                 </div>
                 <hr style="margin: 20px 0;">
-
                 <p style="font-weight: 500; margin-bottom: 10px;">Upload Item Lists (.csv)</p>
                 <div class="form-group"><label>FOOD</label><input type="file" class="form-control item-upload" data-category="FOOD" accept=".csv"></div>
                 <div class="form-group"><label>NONFOOD</label><input type="file" class="form-control item-upload" data-category="NONFOOD" accept=".csv"></div>
@@ -731,9 +818,24 @@
         <div class="modal-content"><div class="modal-body" id="calendarContainer"></div></div>
     </div>
 
+    <div id="cartModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Current Order</h3>
+                <button class="icon-button" data-close-modal="cartModal"><i class="material-icons">close</i></button>
+            </div>
+            <div class="modal-body" id="cartItemsContainer">
+            </div>
+            <div class="modal-footer" style="justify-content: space-between; align-items: center;">
+                <div class="footer-total">Total: <span id="poTotalAmount">₹0.00</span></div>
+                <button class="btn btn-primary" id="savePoBtn">Save PO</button>
+            </div>
+        </div>
+    </div>
+
 <script>
     const firebaseConfig = {
-        apiKey: "AIzaSyAaCIqRl9bf6mVVZSH5T3PrPicVELnCu6U",
+      apiKey: "AIzaSyAaCIqRl9bf6mVVZSH5T3PrPicVELnCu6U",
   authDomain: "posystem-496da.firebaseapp.com",
   projectId: "posystem-496da",
   storageBucket: "posystem-496da.firebasestorage.app",
@@ -745,7 +847,6 @@
     const db = firebase.firestore();
     console.log("Firebase has been initialized.");
 
-
     document.addEventListener('DOMContentLoaded', () => {
     
         const AppState = {
@@ -756,12 +857,12 @@
             dataEntryDrilldown: [],
             newPO: { vendor: null, items: [], total: 0 },
             appLogo: null,
-            itemCache: [] // --- PERFORMANCE FIX: For caching items on New Order page
+            itemCache: [],
+            vendorCache: []
         };
 
         const allPages = document.querySelectorAll('.page');
         
-        // --- PERFORMANCE FIX: Debounce utility function
         function debounce(func, delay = 300) {
             let timer;
             return (...args) => {
@@ -812,7 +913,8 @@
                 return;
             }
             if (currentPage === 'newOrderPage') {
-                AppState.itemCache = []; // Clear cache when leaving the page
+                AppState.itemCache = [];
+                AppState.vendorCache = [];
             }
 
             if (AppState.history.length > 1) {
@@ -896,7 +998,7 @@
                 adminTitle.textContent = AppState.adminDrilldown[0];
                 await renderAdminCategoryDetail(adminContent, AppState.adminDrilldown[0], dateString);
             } else if (drilldownLevel === 2) {
-                adminTitle.textContent = AppState.adminDrilldown[1];
+                adminTitle.textContent = "PO Details";
                 await renderAdminVendorDetail(adminContent, AppState.adminDrilldown[0], AppState.adminDrilldown[1], dateString);
             }
         }
@@ -956,26 +1058,26 @@
             }
 
             const pos = await getPOsForDate(category, dateString);
-            const vendorTotals = pos.reduce((acc, po) => {
-                acc[po.vendor] = (acc[po.vendor] || 0) + po.total;
-                return acc;
-            }, {});
 
-            if (Object.keys(vendorTotals).length === 0) {
+            if (pos.length === 0) {
                 container.innerHTML = `<div class="empty-state"><i class="material-icons">info</i><p>No orders for ${category} on this date.</p></div>`;
                 return;
             }
 
-            container.innerHTML = `<div class="drilldown-header">Vendor Totals for ${category}</div>
-                <ul class="item-list">${Object.entries(vendorTotals).map(([vendor, total]) => `
-                    <li class="list-item admin-vendor-tile" data-vendor="${vendor}">
-                        <span class="list-item-title">${vendor}</span>
-                        <span class="list-item-amount">₹${total.toFixed(2)}</span>
+            container.innerHTML = `<div class="drilldown-header">Purchase Orders for ${category}</div>
+                <ul class="item-list">${pos.map(po => `
+                    <li class="list-item admin-po-tile" data-po-id="${po.id}">
+                        <div class="list-item-main">
+                            <span class="list-item-title">${po.vendor}</span>
+                            <span class="list-item-subtitle">${po.poNumber}</span>
+                        </div>
+                        <span class="list-item-amount">₹${po.total.toFixed(2)}</span>
                     </li>`).join('')}</ul>`;
         }
         
-        async function renderAdminVendorDetail(container, category, vendorOrHeader, dateString) {
+        async function renderAdminVendorDetail(container, category, poId, dateString) {
             if (category === 'VOUCHER') {
+                const vendorOrHeader = poId;
                 const snapshot = await db.collection('vouchers').where('date', '==', dateString).where('header', '==', vendorOrHeader).get();
                 const vouchers = snapshot.docs.map(doc => doc.data());
                 container.innerHTML = `<div class="drilldown-header">Vouchers for ${vendorOrHeader}</div>
@@ -986,55 +1088,31 @@
                 return;
             }
 
-            const pos = await getPOsByVendor(category, vendorOrHeader, dateString);
-            if (pos.length === 0) {
-                container.innerHTML = `<div class="empty-state"><i class="material-icons">info</i><p>No products for this vendor on this date.</p></div>`;
+            const poDoc = await db.collection('purchaseOrders').doc(poId).get();
+            if (!poDoc.exists) {
+                container.innerHTML = `<div class="empty-state"><p>Error: Purchase Order not found.</p></div>`;
                 return;
             }
-
-            const allItems = await getItemsForCategory(category);
-            const allItemsMap = new Map(allItems.map(i => [i['Item Code'], i]));
-
-            const productSummary = {};
+            const po = poDoc.data();
             
-            pos.forEach(po => {
-                po.items.forEach(item => {
-                    if (!productSummary[item.itemCode]) {
-                        const originalItem = allItemsMap.get(item.itemCode);
-                        productSummary[item.itemCode] = { 
-                            name: item.itemName, 
-                            mrp: originalItem ? parseFloat(originalItem.MRP || 0) : 0, 
-                            cost: item.cost, 
-                            qty: 0, 
-                            totalValue: 0 
-                        };
-                    }
-                    productSummary[item.itemCode].qty += item.qty;
-                    productSummary[item.itemCode].totalValue += item.qty * item.cost;
-                });
-            });
-            
-            const approvalKey = `${dateString}-${category}-${vendorOrHeader.replace(/\s+/g, '_')}`;
-            const isApproved = await getApprovalStatus(approvalKey);
+            const isApproved = await getApprovalStatus(poId);
             
             const actionButtonHTML = isApproved
-                ? `<button class="btn btn-success" id="downloadPdfBtn" data-category="${category}" data-vendor="${vendorOrHeader}" data-date="${dateString}"><i class="material-icons" style="font-size: 18px; vertical-align: middle; margin-right: 5px;">picture_as_pdf</i>Download PDF</button>`
-                : `<button class="btn btn-primary" id="approveBtn" data-key="${approvalKey}"><i class="material-icons" style="font-size: 18px; vertical-align: middle; margin-right: 5px;">check_circle</i>Approve Order</button>`;
-            
-            const grandTotal = Object.values(productSummary).reduce((sum, item) => sum + item.totalValue, 0);
+                ? `<button class="btn btn-success" id="downloadPdfBtn" data-po-id="${poId}"><i class="material-icons" style="font-size: 18px; vertical-align: middle; margin-right: 5px;">picture_as_pdf</i>Download PDF</button>`
+                : `<button class="btn btn-primary" id="approveBtn" data-po-id="${poId}"><i class="material-icons" style="font-size: 18px; vertical-align: middle; margin-right: 5px;">check_circle</i>Approve Order</button>`;
 
             container.innerHTML = `
                 <div class="drilldown-header">
-                    <span>Products from ${vendorOrHeader}</span>
+                    <span>Details for ${po.poNumber} (${po.vendor})</span>
                     <div class="drilldown-header-actions">
                         ${actionButtonHTML}
-                        <button class="btn btn-danger" id="deleteOrderBtn" data-category="${category}" data-vendor="${vendorOrHeader}" data-date="${dateString}"><i class="material-icons" style="font-size: 18px; vertical-align: middle;">delete</i></button>
+                        <button class="btn btn-danger" id="deleteOrderBtn" data-po-id="${poId}"><i class="material-icons" style="font-size: 18px; vertical-align: middle;">delete</i></button>
                     </div>
                 </div>
                 <div class="detail-table-wrapper"><table class="detail-table">
-                    <thead><tr><th>Product</th><th class="text-right">MRP</th><th class="text-right">Cost</th><th class="text-center">Qty</th><th class="text-right">Total</th></tr></thead>
-                    <tbody>${Object.values(productSummary).map(item => `<tr><td>${item.name}</td><td class="text-right">₹${item.mrp.toFixed(2)}</td><td class="text-right">₹${item.cost.toFixed(2)}</td><td class="text-center">${item.qty}</td><td class="text-right">₹${item.totalValue.toFixed(2)}</td></tr>`).join('')}</tbody>
-                    <tfoot><tr><td colspan="4">Grand Total</td><td class="text-right">₹${grandTotal.toFixed(2)}</td></tr></tfoot>
+                    <thead><tr><th>Product</th><th class="text-right">Cost</th><th class="text-center">Qty</th><th class="text-right">Total</th></tr></thead>
+                    <tbody>${po.items.map(item => `<tr><td>${item.itemName}</td><td class="text-right">₹${item.cost.toFixed(2)}</td><td class="text-center">${item.qty}</td><td class="text-right">₹${(item.qty * item.cost).toFixed(2)}</td></tr>`).join('')}</tbody>
+                    <tfoot><tr><td colspan="3">Grand Total</td><td class="text-right">₹${po.total.toFixed(2)}</td></tr></tfoot>
                 </table></div>`;
         }
 
@@ -1084,44 +1162,91 @@
         }
 
         async function renderNewOrderPage() {
-            const vendorSelect = document.getElementById('vendorSelect');
-            vendorSelect.innerHTML = '<option value="">Loading Vendors...</option>';
+            AppState.newPO = { vendor: null, items: [], total: 0 };
+            document.getElementById('vendorSearch').value = '';
+            document.getElementById('productSearch').value = '';
+            document.getElementById('vendorSearchResults').innerHTML = '';
+            document.getElementById('productSearchResultsGrid').innerHTML = `<div class="empty-state"><i class="material-icons">search</i><p>Start typing to find products</p></div>`;
+            updateCartBadge();
+            
             const vendorsSnapshot = await db.collection('vendors').orderBy('Customer').get();
-            const vendors = vendorsSnapshot.docs.map(doc => doc.data());
+            AppState.vendorCache = vendorsSnapshot.docs.map(doc => doc.data());
             
-            vendorSelect.innerHTML = '<option value="">-- Select a Vendor --</option>' + vendors.map(v => `<option value="${v.Customer}">${v.Customer}</option>`).join('');
-            
-            // --- PERFORMANCE FIX: Fetch and cache items on page load
             document.getElementById('productSearch').placeholder = "Loading items...";
             AppState.itemCache = await getItemsForCategory(AppState.currentCategory);
-            document.getElementById('productSearch').placeholder = "Type to search...";
-            
-            AppState.newPO = { vendor: null, items: [], total: 0 };
-            document.getElementById('productSearch').value = '';
-            document.getElementById('productSearchResults').innerHTML = '';
-            renderCurrentPOItems();
-            updatePOTotal();
+            document.getElementById('productSearch').placeholder = "Type to search or scan...";
         }
         
-        // --- PERFORMANCE FIX: This function is now synchronous and uses the cache
         function renderProductSearchResults(query) {
-            const container = document.getElementById('productSearchResults');
-            if (!query || query.length < 2) { container.innerHTML = ''; return; }
+            const container = document.getElementById('productSearchResultsGrid');
+            if (!query || query.length < 2) { 
+                container.innerHTML = `<div class="empty-state"><i class="material-icons">search</i><p>Start typing to find products</p></div>`; 
+                return;
+            }
             
             const items = AppState.itemCache;
-
             const filteredItems = items
                 .filter(item => item['Item Name'] && item['Item Name'].toLowerCase().includes(query.toLowerCase()))
                 .slice(0, 50);
 
-            container.innerHTML = filteredItems.map(item => `<div class="product-search-item" data-item-id="${item.id}"><div class="item-name">${item['Item Name']}</div><div class="item-mrp">MRP: ${parseFloat(item.MRP || 0).toFixed(2)}</div></div>`).join('');
+            if (filteredItems.length === 0) {
+                container.innerHTML = `<div class="empty-state"><i class="material-icons">search_off</i><p>No products found</p></div>`;
+                return;
+            }
+
+            container.innerHTML = filteredItems.map(item => {
+                const defaultCost = parseFloat(item.Cost || 0);
+                return `
+                <div class="product-card">
+                    <div class="product-card-header">
+                        <span class="item-name">${item['Item Name']}</span>
+                        <span class="item-mrp">MRP: ₹${parseFloat(item.MRP || 0).toFixed(2)}</span>
+                    </div>
+                    <form class="product-card-actions" data-item-id="${item.id}" data-item-name="${item['Item Name']}" data-item-code="${item['Item Code']}" data-default-cost="${defaultCost}">
+                        <div class="input-group">
+                            <label for="cost-${item.id}">Cost</label>
+                            <input type="number" id="cost-${item.id}" class="form-control cost-input" value="${defaultCost.toFixed(2)}" readonly>
+                        </div>
+                        <div class="input-group">
+                            <label for="qty-${item.id}">QTY</label>
+                            <input type="number" id="qty-${item.id}" class="form-control qty-input" value="1" min="1">
+                        </div>
+                        <div class="input-group">
+                            <label>&nbsp;</label>
+                            <button type="submit" class="btn btn-primary add-item-btn">Add</button>
+                        </div>
+                    </form>
+                </div>
+                `;
+            }).join('');
+        }
+        
+        function updateCartBadge() {
+            const badge = document.getElementById('cart-badge');
+            const totalItems = AppState.newPO.items.length;
+            badge.textContent = totalItems;
+            badge.style.display = totalItems > 0 ? 'flex' : 'none';
         }
 
-        function renderCurrentPOItems() {
-            const container = document.getElementById('currentPoItems');
+        function renderCartModal() {
+            const container = document.getElementById('cartItemsContainer');
             container.innerHTML = AppState.newPO.items.length === 0
-                ? `<div class="empty-state" style="padding:10px; height: 100px; background-color: var(--card-bg); border-radius: var(--border-radius);"><i class="material-icons" style="font-size:32px;">add_shopping_cart</i><p style="font-size:14px;">Add items by searching above</p></div>`
+                ? `<div class="empty-state"><i class="material-icons">remove_shopping_cart</i><p>Your cart is empty</p></div>`
                 : AppState.newPO.items.map((item, index) => `<div class="list-item" style="padding: 10px; margin-bottom: 5px; cursor: default;"><div style="flex-grow:1;"><div class="list-item-title" style="font-size:14px;">${item.itemName}</div><div style="display:flex; align-items:center; gap:10px; margin-top:5px;"><span>Qty:</span><input type="number" class="form-control po-item-qty" value="${item.qty}" data-index="${index}" style="width: 70px; padding: 5px;"><span>@ ₹${item.cost.toFixed(2)}</span></div></div><button class="icon-button po-item-remove" data-index="${index}"><i class="material-icons" style="color:var(--danger-color)">delete</i></button></div>`).join('');
+            updatePOTotal();
+        }
+        
+        function renderVendorSearchResults(query) {
+            const container = document.getElementById('vendorSearchResults');
+            if (!query || query.length < 1) { container.innerHTML = ''; return; }
+
+            const filteredVendors = AppState.vendorCache
+                .filter(vendor => vendor.Customer && vendor.Customer.toLowerCase().includes(query.toLowerCase()))
+                .slice(0, 10);
+
+            container.innerHTML = filteredVendors.map(vendor => 
+                `<div class="vendor-search-item" data-vendor-name="${vendor.Customer}">${vendor.Customer}</div>`
+            ).join('');
         }
 
         const updatePOTotal = () => {
@@ -1231,47 +1356,43 @@
                 </table></div>`;
         }
         
-        async function generatePDF(category, vendor, dateString) {
+        async function generatePDF(poId) {
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
             
-            const pos = await getPOsByVendor(category, vendor, dateString);
-            if (pos.length === 0) { alert('No data found to generate PDF.'); return; }
-            const allItems = await getItemsForCategory(category);
-            const allItemsMap = new Map(allItems.map(i => [i['Item Code'], i]));
-            const productSummary = {};
-            let poNumberForPDF = pos[0].poNumber || 'N/A';
-
-            pos.forEach(po => {
-                po.items.forEach(item => {
-                    if (!productSummary[item.itemCode]) {
-                        const originalItem = allItemsMap.get(item.itemCode);
-                        productSummary[item.itemCode] = { 
-                            name: item.itemName, mrp: originalItem ? parseFloat(originalItem.MRP || 0) : 0, qty: 0 
-                        };
-                    }
-                    productSummary[item.itemCode].qty += item.qty;
-                });
-            });
+            const poDoc = await db.collection('purchaseOrders').doc(poId).get();
+            if (!poDoc.exists) { 
+                alert('Could not find order to generate PDF.'); 
+                return; 
+            }
             
-            const tableData = Object.values(productSummary).map((item, index) => [
-                index + 1, item.name, item.mrp.toFixed(2), item.qty,
+            const po = poDoc.data();
+
+            // 1. FIXED: tableData now only includes the 3 required columns.
+            const tableData = po.items.map((item, index) => [
+                index + 1, 
+                item.itemName, 
+                item.qty
             ]);
             
             doc.setFontSize(20); doc.text("Purchase Order", 14, 22);
             doc.setFontSize(12); doc.text("From: Metro Fresh", 14, 32);
-            doc.setFontSize(14); doc.setFont("helvetica", "bold"); doc.text(`Bill To: ${vendor}`, 14, 45);
+            doc.setFontSize(14); doc.setFont("helvetica", "bold"); doc.text(`Bill To: ${po.vendor}`, 14, 45);
             doc.setFontSize(10); doc.setFont("helvetica", "normal");
-            doc.text(`PO Date: ${formatDisplayDate(dateString)}`, 140, 45);
-            doc.text(`PO Number: ${poNumberForPDF}`, 140, 50);
+            doc.text(`PO Date: ${formatDisplayDate(po.date)}`, 140, 45);
+            doc.text(`PO Number: ${po.poNumber}`, 140, 50);
 
             doc.autoTable({
-                head: [['S.No.', 'Item Name', 'MRP', 'Quantity']], body: tableData, startY: 60,
+                // 2. FIXED: The head now only has 3 column titles.
+                head: [['S.No.', 'Item Name', 'Quantity']], 
+                body: tableData, 
+                startY: 60,
                 headStyles: { fillColor: [41, 128, 185], textColor: 255 },
                 alternateRowStyles: { fillColor: [245, 245, 245] },
+                // 3. FIXED: The didDrawPage callback (which drew the Grand Total) is completely removed.
             });
 
-            doc.save(`PO_${vendor}_${dateString}.pdf`);
+            doc.save(`PO_${po.vendor}_${po.date}.pdf`);
         }
 
         async function generateExcel(category, vendor, dateString) {
@@ -1303,7 +1424,6 @@
             XLSX.writeFile(workbook, `DE_${vendor}_${dateString}.xlsx`);
         }
 
-
         document.body.addEventListener('click', async (e) => {
             const tile = e.target.closest('.tile');
             if (tile) { 
@@ -1315,39 +1435,28 @@
             }
             
             if (e.target.closest('.back-btn')) await goBack();
-            if (e.target.closest('.calendar-btn')) {
-                renderCalendar();
-            }
 
-            // 2. Handles clicking the PREVIOUS month button inside the modal
-            if (e.target.closest('#prevMonth')) {
-                AppState.currentDate.setMonth(AppState.currentDate.getMonth() - 1);
-                renderCalendar(); // Re-render the calendar with the new month
-            }
-
-            // 3. Handles clicking the NEXT month button inside the modal
-            if (e.target.closest('#nextMonth')) {
-                AppState.currentDate.setMonth(AppState.currentDate.getMonth() + 1);
-                renderCalendar(); // Re-render the calendar with the new month
-            }
-
-            // 4. Handles clicking on a specific DAY in the calendar
+            if (e.target.closest('.calendar-btn')) { renderCalendar(); }
+            if (e.target.closest('#prevMonth')) { AppState.currentDate.setMonth(AppState.currentDate.getMonth() - 1); renderCalendar(); }
+            if (e.target.closest('#nextMonth')) { AppState.currentDate.setMonth(AppState.currentDate.getMonth() + 1); renderCalendar(); }
+            
             const calDay = e.target.closest('.calendar-day:not(.empty)');
             if (calDay) {
                 AppState.currentDate = new Date(AppState.currentDate.getFullYear(), AppState.currentDate.getMonth(), parseInt(calDay.dataset.day));
                 hideModal('calendarModal');
                 const currentPage = AppState.history[AppState.history.length - 1];
-
-                // Correctly await the functions to reload the page with the new date's data
-                if (currentPage === 'categoryPage') await renderCategoryPage(AppState.currentCategory);
-                if (currentPage === 'adminPage') await renderAdminPage();
-                if (currentPage === 'voucherPage') await renderVoucherPage();
-                if (currentPage === 'dataEntryPage') await renderDataEntryPage();
+                switch (currentPage) {
+                    case 'categoryPage': await renderCategoryPage(AppState.currentCategory); break;
+                    case 'adminPage': await renderAdminPage(); break;
+                    case 'voucherPage': await renderVoucherPage(); break;
+                    case 'dataEntryPage': await renderDataEntryPage(); break;
+                }
             }
+            
             if (e.target.closest('#addPoBtn')) await navigateTo('newOrderPage');
             if (e.target.closest('#addVoucherBtn')) showModal('newVoucherModal');
 
-            if (e.target.closest('[data-close-modal]') || e.target.id === 'calendarModal') {
+            if (e.target.closest('[data-close-modal]')) {
                 hideModal(e.target.closest('.modal').id);
             }
             
@@ -1357,36 +1466,54 @@
             const adminVendorTile = e.target.closest('.admin-vendor-tile');
             if (adminVendorTile) { AppState.adminDrilldown.push(adminVendorTile.dataset.vendor); await renderAdminPage(); }
             
+            const adminPOTile = e.target.closest('.admin-po-tile');
+            if (adminPOTile) { AppState.adminDrilldown.push(adminPOTile.dataset.poId); await renderAdminPage(); }
+
             const dataEntryCatTile = e.target.closest('.data-entry-category-tile');
             if (dataEntryCatTile) { AppState.dataEntryDrilldown.push(dataEntryCatTile.dataset.category); await renderDataEntryPage(); }
 
             const dataEntryVendorTile = e.target.closest('.data-entry-vendor-tile');
             if (dataEntryVendorTile) { AppState.dataEntryDrilldown.push(dataEntryVendorTile.dataset.vendor); await renderDataEntryPage(); }
+            
+            const poListItem = e.target.closest('.list-item[data-po-id]');
+            if (poListItem) {
+                const poId = poListItem.dataset.poId;
+                if (!poId) return;
+                try {
+                    const poDoc = await db.collection('purchaseOrders').doc(poId).get();
+                    if (!poDoc.exists) { alert("Error: Could not find the selected Purchase Order."); return; }
+                    const po = poDoc.data();
+                    document.getElementById('poDetailsTitle').textContent = `Details for ${po.poNumber}`;
+                    document.getElementById('poDetailsBody').innerHTML = `
+                        <p><strong>Vendor:</strong> ${po.vendor}</p>
+                        <p><strong>Date:</strong> ${formatDisplayDate(po.date)}</p>
+                        <div class="detail-table-wrapper" style="margin-top: 10px;"><table class="detail-table">
+                            <thead><tr><th>S.No.</th><th>Product</th><th class="text-center">Qty</th><th class="text-right">Cost</th><th class="text-right">Total</th></tr></thead>
+                            <tbody>${po.items.map((item, index) => `<tr><td>${index + 1}</td><td>${item.itemName}</td><td class="text-center">${item.qty}</td><td class="text-right">₹${item.cost.toFixed(2)}</td><td class="text-right">₹${(item.qty * item.cost).toFixed(2)}</td></tr>`).join('')}</tbody>
+                            <tfoot><tr><td colspan="4">Grand Total</td><td class="text-right">₹${po.total.toFixed(2)}</td></tr></tfoot>
+                        </table></div>`;
+                    showModal('poDetailsModal');
+                } catch (error) { console.error("Failed to fetch PO details:", error); alert("An error occurred while fetching the PO details."); }
+            }
 
-            const searchItem = e.target.closest('.product-search-item');
-            if (searchItem) {
-                const itemId = searchItem.dataset.itemId;
-                // --- PERFORMANCE FIX: Get item from cache instead of DB
-                const itemToAdd = AppState.itemCache.find(i => i.id === itemId);
+            if (e.target.closest('#cart-btn')) {
+                renderCartModal();
+                showModal('cartModal');
+            }
 
-                if (itemToAdd && !AppState.newPO.items.some(i => i.itemCode === itemToAdd['Item Code'])) {
-                    AppState.newPO.items.push({ 
-                        itemCode: itemToAdd['Item Code'], itemName: itemToAdd['Item Name'], cost: parseFloat(itemToAdd.Cost || 0), qty: 1 
-                    });
-                    renderCurrentPOItems();
-                    updatePOTotal();
-                    document.getElementById('productSearch').value = '';
-                    document.getElementById('productSearchResults').innerHTML = '';
-                } else if (itemToAdd) {
-                    alert('Item is already in the order.');
-                }
+            const vendorItem = e.target.closest('.vendor-search-item');
+            if (vendorItem) {
+                const vendorName = vendorItem.dataset.vendorName;
+                AppState.newPO.vendor = vendorName;
+                document.getElementById('vendorSearch').value = vendorName;
+                document.getElementById('vendorSearchResults').innerHTML = '';
             }
             
             const removeItemBtn = e.target.closest('.po-item-remove');
             if (removeItemBtn) {
                 AppState.newPO.items.splice(parseInt(removeItemBtn.dataset.index), 1);
-                renderCurrentPOItems();
-                updatePOTotal();
+                renderCartModal();
+                updateCartBadge();
             }
 
             const saveVoucherBtn = e.target.closest('#saveVoucherBtn');
@@ -1403,7 +1530,7 @@
                     document.getElementById('voucherHeader').value = '';
                     document.getElementById('voucherAmount').value = '';
                     hideModal('newVoucherModal');
-                    await renderVoucherList();
+                    if(AppState.history.includes('voucherPage')) await renderVoucherList();
                     alert('Voucher saved successfully!');
                 } catch (error) { console.error("Error saving voucher: ", error); alert("Failed to save voucher."); }
             }
@@ -1415,20 +1542,25 @@
             
             const approveBtn = e.target.closest('#approveBtn');
             if (approveBtn) {
-                const key = approveBtn.dataset.key;
-                const [date, category, ...vendorParts] = key.split('-');
-                const vendor = vendorParts.join('-').replace(/_/g, ' ');
-                await db.collection('approvals').doc(key).set({
-                    approvedAt: firebase.firestore.FieldValue.serverTimestamp(),
-                    date, category, vendor
-                });
-                await renderAdminPage(); 
+                const poId = approveBtn.dataset.poId;
+                const poDoc = await db.collection('purchaseOrders').doc(poId).get();
+                if(poDoc.exists) {
+                    const poData = poDoc.data();
+                    await db.collection('approvals').doc(poId).set({
+                        approvedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                        date: poData.date,
+                        category: poData.category,
+                        vendor: poData.vendor,
+                        poNumber: poData.poNumber
+                    });
+                    await renderAdminPage(); 
+                }
             }
 
             const downloadPdfBtn = e.target.closest('#downloadPdfBtn');
             if (downloadPdfBtn) {
-                const { category, vendor, date } = downloadPdfBtn.dataset;
-                await generatePDF(category, vendor, date);
+                const poId = downloadPdfBtn.dataset.poId;
+                await generatePDF(poId);
             }
 
             const downloadExcelBtn = e.target.closest('#downloadExcelBtn');
@@ -1439,21 +1571,15 @@
 
             const deleteBtn = e.target.closest('#deleteOrderBtn');
             if (deleteBtn) {
-                if (confirm('Are you sure you want to delete all orders for this vendor on this date? This action cannot be undone.')) {
-                    const { category, vendor, date } = deleteBtn.dataset;
-                    
-                    const posToDeleteSnapshot = await db.collection('purchaseOrders')
-                        .where('category', '==', category).where('vendor', '==', vendor).where('date', '==', date).get();
-
+                if (confirm('Are you sure you want to delete this specific order? This action cannot be undone.')) {
+                    const poId = deleteBtn.dataset.poId;
                     const batch = db.batch();
-                    posToDeleteSnapshot.docs.forEach(doc => batch.delete(doc.ref));
-                    
-                    const approvalKey = `${date}-${category}-${vendor.replace(/\s+/g, '_')}`;
-                    const approvalRef = db.collection('approvals').doc(approvalKey);
+                    const poRef = db.collection('purchaseOrders').doc(poId);
+                    const approvalRef = db.collection('approvals').doc(poId);
+                    batch.delete(poRef);
                     batch.delete(approvalRef);
-                    
                     await batch.commit();
-                    alert('Orders and approval deleted successfully.');
+                    alert('Order deleted successfully.');
                     await goBack();
                 }
             }
@@ -1469,6 +1595,41 @@
                     updatePOTotal();
                 }
             }
+        });
+        
+        document.getElementById('productSearchResultsGrid').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const form = e.target;
+            if (!form.classList.contains('product-card-actions')) return;
+
+            const itemName = form.dataset.itemName;
+            const itemCode = form.dataset.itemCode;
+            const finalCost = parseFloat(form.dataset.defaultCost);
+            const qtyInput = form.querySelector('.qty-input');
+            const qty = parseInt(qtyInput.value) || 1;
+
+            const existingItem = AppState.newPO.items.find(i => i.itemCode === itemCode && i.cost === finalCost);
+
+            if (existingItem) {
+                existingItem.qty += qty;
+            } else {
+                AppState.newPO.items.push({ 
+                    itemCode: itemCode, itemName: itemName, cost: finalCost, qty: qty 
+                });
+            }
+            updateCartBadge();
+            
+            qtyInput.value = '1';
+            const addButton = form.querySelector('.add-item-btn');
+            addButton.textContent = 'Added!';
+            addButton.classList.remove('btn-primary');
+            addButton.classList.add('btn-success');
+            
+            setTimeout(() => {
+                addButton.textContent = 'Add';
+                addButton.classList.remove('btn-success');
+                addButton.classList.add('btn-primary');
+            }, 1000);
         });
 
         const handleFileUpload = (file, onComplete) => {
@@ -1507,11 +1668,11 @@
             });
         });
         
-        // --- PERFORMANCE FIX: Debounce the search input
-        const debouncedSearch = debounce((event) => renderProductSearchResults(event.target.value));
-        document.getElementById('productSearch').addEventListener('keyup', debouncedSearch);
-        
-        document.getElementById('vendorSelect').addEventListener('change', e => AppState.newPO.vendor = e.target.value);
+        const debouncedProductSearch = debounce((event) => renderProductSearchResults(event.target.value));
+        document.getElementById('productSearch').addEventListener('keyup', debouncedProductSearch);
+
+        const debouncedVendorSearch = debounce((event) => renderVendorSearchResults(event.target.value));
+        document.getElementById('vendorSearch').addEventListener('keyup', debouncedVendorSearch);
         
         document.getElementById('savePoBtn').addEventListener('click', async () => {
             const { vendor, items, total } = AppState.newPO;
@@ -1535,11 +1696,17 @@
                 });
 
                 const newPO = { 
-                    poNumber: newPoNumber, category: AppState.currentCategory, timestamp: firebase.firestore.FieldValue.serverTimestamp(), 
-                    date: toLocalDateString(new Date()), vendor, items, total 
+                    poNumber: newPoNumber, 
+                    category: AppState.currentCategory, 
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp(), 
+                    date: toLocalDateString(new Date()), 
+                    vendor, 
+                    items, 
+                    total 
                 };
 
                 await db.collection('purchaseOrders').add(newPO);
+                hideModal('cartModal');
                 await goBack();
                 alert(`Purchase Order ${newPoNumber} saved successfully!`);
 
@@ -1575,17 +1742,16 @@
             reader.readAsDataURL(file);
         });
 
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js').then(registration => {
+                    console.log('ServiceWorker registration successful with scope: ', registration.scope);
+                }, err => {
+                    console.log('ServiceWorker registration failed: ', err);
+                });
+            });
+        }
     });
-    // Register Service Worker for PWA functionality
-if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js').then(registration => {
-            console.log('ServiceWorker registration successful with scope: ', registration.scope);
-        }, err => {
-            console.log('ServiceWorker registration failed: ', err);
-        });
-    });
-}
 </script>
 
 </body>
