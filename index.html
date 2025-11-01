@@ -1315,6 +1315,35 @@
             }
             
             if (e.target.closest('.back-btn')) await goBack();
+            if (e.target.closest('.calendar-btn')) {
+                renderCalendar();
+            }
+
+            // 2. Handles clicking the PREVIOUS month button inside the modal
+            if (e.target.closest('#prevMonth')) {
+                AppState.currentDate.setMonth(AppState.currentDate.getMonth() - 1);
+                renderCalendar(); // Re-render the calendar with the new month
+            }
+
+            // 3. Handles clicking the NEXT month button inside the modal
+            if (e.target.closest('#nextMonth')) {
+                AppState.currentDate.setMonth(AppState.currentDate.getMonth() + 1);
+                renderCalendar(); // Re-render the calendar with the new month
+            }
+
+            // 4. Handles clicking on a specific DAY in the calendar
+            const calDay = e.target.closest('.calendar-day:not(.empty)');
+            if (calDay) {
+                AppState.currentDate = new Date(AppState.currentDate.getFullYear(), AppState.currentDate.getMonth(), parseInt(calDay.dataset.day));
+                hideModal('calendarModal');
+                const currentPage = AppState.history[AppState.history.length - 1];
+
+                // Correctly await the functions to reload the page with the new date's data
+                if (currentPage === 'categoryPage') await renderCategoryPage(AppState.currentCategory);
+                if (currentPage === 'adminPage') await renderAdminPage();
+                if (currentPage === 'voucherPage') await renderVoucherPage();
+                if (currentPage === 'dataEntryPage') await renderDataEntryPage();
+            }
             if (e.target.closest('#addPoBtn')) await navigateTo('newOrderPage');
             if (e.target.closest('#addVoucherBtn')) showModal('newVoucherModal');
 
