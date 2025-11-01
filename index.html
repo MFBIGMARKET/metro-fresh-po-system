@@ -1449,8 +1449,11 @@
             
             const po = poDoc.data();
 
+            // FIX 1: The table data now only contains S.No, Item Name, and Quantity.
             const tableData = po.items.map((item, index) => [
-                index + 1, item.itemName, item.qty, item.cost.toFixed(2), (item.qty * item.cost).toFixed(2)
+                index + 1, 
+                item.itemName, 
+                item.qty
             ]);
             
             doc.setFontSize(20); doc.text("Purchase Order", 14, 22);
@@ -1461,15 +1464,13 @@
             doc.text(`PO Number: ${po.poNumber}`, 140, 50);
 
             doc.autoTable({
-                head: [['S.No.', 'Item Name', 'Qty', 'Cost', 'Total']], body: tableData, startY: 60,
+                // FIX 2: The table header is now corrected to match the data.
+                head: [['S.No.', 'Item Name', 'Quantity']], 
+                body: tableData, 
+                startY: 60,
                 headStyles: { fillColor: [41, 128, 185], textColor: 255 },
                 alternateRowStyles: { fillColor: [245, 245, 245] },
-                didDrawPage: (data) => {
-                    doc.setFontSize(12);
-                    doc.setFont("helvetica", "bold");
-                    doc.text('Grand Total:', data.settings.margin.left, doc.internal.pageSize.height - 15);
-                    doc.text(`₹${po.total.toFixed(2)}`, doc.internal.pageSize.width - data.settings.margin.right, doc.internal.pageSize.height - 15, { align: 'right' });
-                }
+                // FIX 3: The "didDrawPage" function that printed the Grand Total has been completely removed.
             });
 
             doc.save(`PO_${po.vendor}_${po.date}.pdf`);
