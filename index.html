@@ -1065,7 +1065,13 @@
             const config = { fps: 10, qrbox: { width: 250, height: 250 } };
             const qrCodeSuccessCallback = (decodedText, decodedResult) => {
                 stopScanner();
-                const foundItem = AppState.itemCache.find(item => item['EAN Code'] === decodedText || item['EAN code'] === decodedText);
+                
+                // --- DEFINITIVE SCANNER FIX ---
+                // Now only checks for the standardized 'EAN Code' property.
+                const foundItem = AppState.itemCache.find(item => 
+                    item['EAN Code'] && String(item['EAN Code']).trim() === decodedText
+                );
+                
                 if (foundItem) {
                     document.getElementById('productSearchResultsGrid').innerHTML = `
                         <div class="product-card">
@@ -1074,6 +1080,10 @@
                                 <span class="item-mrp">MRP: ₹${parseFloat(foundItem.MRP || 0).toFixed(2)}</span>
                             </div>
                             <form class="product-card-actions" data-item-id="${foundItem.id}" data-item-name="${foundItem['Item Name']}" data-item-code="${foundItem['Item Code']}" data-default-cost="${parseFloat(foundItem.Cost || foundItem['Purchase Cost'] || 0)}">
+                                <div class="input-group">
+                                    <label for="cost-${foundItem.id}">Cost</label>
+                                    <input type="number" id="cost-${foundItem.id}" class="form-control cost-input" value="${parseFloat(foundItem.Cost || foundItem['Purchase Cost'] || 0).toFixed(2)}" readonly>
+                                </div>
                                 <div class="input-group">
                                     <label for="qty-${foundItem.id}">QTY</label>
                                     <input type="number" id="qty-${foundItem.id}" class="form-control qty-input" value="1" min="1">
@@ -1752,14 +1762,39 @@
                 const category = e.target.dataset.category;
                 handleFileUpload(e.target.files[0], async (data) => {
                     const batch = db.batch();
+                    let validItemsCount = 0;
+
                     data.forEach(item => {
-                         if (item['Item Code'] && item['Item Name']) {
-                            const cost = parseFloat(item.Cost || item['Purchase Cost'] || 0);
-                            batch.set(db.collection('items').doc(), { ...item, Cost: cost, category: category });
-                         }
+                        const cleanedItem = {};
+                        for (const key in item) {
+                            cleanedItem[key.trim()] = item[key];
+                        }
+                        
+                        const itemCode = cleanedItem['Item Code'];
+                        const itemName = cleanedItem['Item Name'];
+
+                        if (itemCode && itemName && itemCode.trim() !== '' && itemName.trim() !== '') {
+                            const docRef = db.collection('items').doc();
+
+                            // --- DEFINITIVE MAPPING FIX ---
+                            const newItem = {
+                                'Item Code': itemCode,
+                                'Item Name': itemName,
+                                'MRP': parseFloat(cleanedItem.MRP || 0),
+                                'Cost': parseFloat(cleanedItem['Purchase Cost'] || cleanedItem.Cost || 0),
+                                'BRAND': cleanedItem.BRAND || 'Unbranded',
+                                // This ensures the property is ALWAYS 'EAN Code' in the database
+                                'EAN Code': cleanedItem['EAN code'] || cleanedItem['EAN Code'] || '',
+                                'category': category
+                            };
+                            
+                            batch.set(docRef, newItem);
+                            validItemsCount++;
+                        }
                     });
+
                     await batch.commit();
-                    alert(`Uploaded ${data.length} items for ${category} to Firestore.`);
+                    alert(`Uploaded ${validItemsCount} items for ${category} to Firestore.`);
                 });
             });
         });
