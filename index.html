@@ -567,7 +567,7 @@
         .product-card-actions {
             grid-column: 1 / -1;
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
+            grid-template-columns: 1fr auto;
             gap: 10px;
             align-items: flex-end;
         }
@@ -575,10 +575,6 @@
             padding: 8px;
             font-size: 14px;
             text-align: center;
-        }
-        .product-card-actions .cost-input[readonly] {
-            background-color: #e9ecef;
-            cursor: not-allowed;
         }
         .product-card-actions .btn {
             padding: 8px 16px;
@@ -1079,10 +1075,6 @@
                             </div>
                             <form class="product-card-actions" data-item-id="${foundItem.id}" data-item-name="${foundItem['Item Name']}" data-item-code="${foundItem['Item Code']}" data-default-cost="${parseFloat(foundItem.Cost || foundItem['Purchase Cost'] || 0)}">
                                 <div class="input-group">
-                                    <label for="cost-${foundItem.id}">Cost</label>
-                                    <input type="number" id="cost-${foundItem.id}" class="form-control cost-input" value="${parseFloat(foundItem.Cost || foundItem['Purchase Cost'] || 0).toFixed(2)}" readonly>
-                                </div>
-                                <div class="input-group">
                                     <label for="qty-${foundItem.id}">QTY</label>
                                     <input type="number" id="qty-${foundItem.id}" class="form-control qty-input" value="1" min="1">
                                 </div>
@@ -1187,8 +1179,6 @@
             const adminContent = document.getElementById('adminContent');
             const adminTitle = document.getElementById('adminTitle');
             const dateString = toLocalDateString(AppState.currentDate);
-
-            // Get references to the header buttons within the admin page
             const calendarBtn = document.querySelector('#adminPage .calendar-btn');
             const settingsBtn = document.getElementById('settingsBtn');
 
@@ -1196,22 +1186,16 @@
             
             if (drilldownLevel === 0) {
                 adminTitle.textContent = 'Admin';
-                // Show buttons on the main dashboard
                 if (calendarBtn) calendarBtn.style.display = 'flex';
                 if (settingsBtn) settingsBtn.style.display = 'flex';
                 await renderAdminDashboard(dateString);
-
             } else if (drilldownLevel === 1) {
                 adminTitle.textContent = AppState.adminDrilldown[0];
-                // Also show buttons on the category/vendor list view
                 if (calendarBtn) calendarBtn.style.display = 'flex';
                 if (settingsBtn) settingsBtn.style.display = 'flex';
                 await renderAdminCategoryDetail(adminContent, AppState.adminDrilldown[0], dateString);
-
             } else if (drilldownLevel === 2) {
                 adminTitle.textContent = "PO Details";
-                // --- THIS IS THE FIX ---
-                // Hide the buttons when viewing a specific PO's details
                 if (calendarBtn) calendarBtn.style.display = 'none';
                 if (settingsBtn) settingsBtn.style.display = 'none';
                 await renderAdminVendorDetail(adminContent, AppState.adminDrilldown[0], AppState.adminDrilldown[1]);
@@ -1241,10 +1225,8 @@
             });
             const voucherTotal = allVouchers.reduce((sum, v) => sum + v.amount, 0);
             totals.ALL += voucherTotal;
-            
             const adminContent = document.getElementById('adminContent');
             adminContent.innerHTML = updateAdminProgressBar(totals.ALL) + `<div id="adminDashboardContainer"></div>`;
-            
             document.getElementById('adminDashboardContainer').innerHTML = `<div class="tile-grid">
                 <div class="admin-summary-tile admin-total-tile" style="background-color: var(--dark-color); cursor: default;">
                     <span class="admin-tile-title" style="color: white;">TOTAL</span>
@@ -1428,7 +1410,7 @@
                 container.innerHTML = `<div class="empty-state"><i class="material-icons">search</i><p>Start typing to find products</p></div>`; 
                 return;
             }
-            const filteredItems = (query && query.length >= 2) 
+            const filteredItems = (query && query.length >= 1) 
                 ? items.filter(item => item['Item Name'] && item['Item Name'].toLowerCase().includes(query.toLowerCase()))
                 : items;
             if (filteredItems.length === 0) {
@@ -1444,10 +1426,6 @@
                         <span class="item-mrp">MRP: ₹${parseFloat(item.MRP || 0).toFixed(2)}</span>
                     </div>
                     <form class="product-card-actions" data-item-id="${item.id}" data-item-name="${item['Item Name']}" data-item-code="${item['Item Code']}" data-default-cost="${defaultCost}">
-                        <div class="input-group">
-                            <label for="cost-${item.id}">Cost</label>
-                            <input type="number" id="cost-${item.id}" class="form-control cost-input" value="${defaultCost.toFixed(2)}" readonly>
-                        </div>
                         <div class="input-group">
                             <label for="qty-${item.id}">QTY</label>
                             <input type="number" id="qty-${item.id}" class="form-control qty-input" value="1" min="1">
@@ -1472,7 +1450,7 @@
             const container = document.getElementById('cartItemsContainer');
             container.innerHTML = AppState.newPO.items.length === 0
                 ? `<div class="empty-state"><i class="material-icons">remove_shopping_cart</i><p>Your cart is empty</p></div>`
-                : AppState.newPO.items.map((item, index) => `<div class="list-item" style="padding: 10px; margin-bottom: 5px; cursor: default;"><div style="flex-grow:1;"><div class="list-item-title" style="font-size:14px;">${item.itemName}</div><div style="display:flex; align-items:center; gap:10px; margin-top:5px;"><span>Qty:</span><input type="number" class="form-control po-item-qty" value="${item.qty}" data-index="${index}" style="width: 70px; padding: 5px;"><span>@ ₹${item.cost.toFixed(2)}</span></div></div><button class="icon-button po-item-remove" data-index="${index}"><i class="material-icons" style="color:var(--danger-color)">delete</i></button></div>`).join('');
+                : AppState.newPO.items.map((item, index) => `<div class="list-item" style="padding: 10px; margin-bottom: 5px; cursor: default;"><div style="flex-grow:1;"><div class="list-item-title" style="font-size:14px;">${item.itemName}</div><div style="display:flex; align-items:center; gap:10px; margin-top:5px;"><span>Qty:</span><input type="number" class="form-control po-item-qty" value="${item.qty}" data-index="${index}" style="width: 70px; padding: 5px;"></div></div><button class="icon-button po-item-remove" data-index="${index}"><i class="material-icons" style="color:var(--danger-color)">delete</i></button></div>`).join('');
             updatePOTotal();
         }
         
@@ -1517,26 +1495,14 @@
             const pageWidth = doc.internal.pageSize.getWidth();
             const pageHeight = doc.internal.pageSize.getHeight();
             const margin = 14;
-            
             const poDoc = await db.collection('purchaseOrders').doc(poId).get();
-            if (!poDoc.exists) { 
-                alert('Could not find order to generate PDF.'); 
-                return; 
-            }
-            
+            if (!poDoc.exists) { alert('Could not find order to generate PDF.'); return; }
             const po = poDoc.data();
             const tableData = po.items.map((item, index) => [ index + 1, item.itemName, item.qty ]);
-
-            // --- START: FINAL PDF LAYOUT ---
-
             const lemongrassGreen = '#8BC34A';
             const textColor = '#212529';
             const secondaryColor = '#6c757d';
-
-            // -- 1. TOP HEADER SECTION --
             const topY = 10;
-
-            // Add Logo (Top Right)
             const logoData = localStorage.getItem('appLogo');
             if (logoData) {
                 try {
@@ -1544,22 +1510,14 @@
                     const logoHeight = 20;
                     const logoX = pageWidth - logoWidth - margin; 
                     doc.addImage(logoData, 'PNG', logoX, topY, logoWidth, logoHeight);
-                } catch (e) {
-                    console.error("Error adding logo to PDF:", e);
-                }
+                } catch (e) { console.error("Error adding logo to PDF:", e); }
             }
-
-            // Document Title (Top Left, Vertically Centered with Logo)
             doc.setFontSize(22);
             doc.setFont("helvetica", "bold");
             doc.setTextColor(textColor);
-            doc.text("Purchase Order", margin, topY + 12); // Aligned to the vertical middle of the logo space
-
-            // --- 2. MIDDLE INFORMATION BLOCK (Compact) ---
-            const middleY = topY + 25; // Reduced space
+            doc.text("Purchase Order", margin, topY + 12);
+            const middleY = topY + 25;
             const rightAlignX = pageWidth - margin;
-
-            // "From" Line
             doc.setFontSize(11);
             doc.setFont("helvetica", "normal");
             doc.setTextColor(secondaryColor);
@@ -1567,16 +1525,12 @@
             doc.setFont("helvetica", "bold");
             doc.setTextColor(textColor);
             doc.text("Metro Fresh", margin + 12, middleY);
-
-            // "Bill To" Line
             doc.setFont("helvetica", "normal");
             doc.setTextColor(secondaryColor);
             doc.text("Bill To:", margin, middleY + 7);
             doc.setFont("helvetica", "bold");
             doc.setTextColor(textColor);
             doc.text(po.vendor, margin + 15, middleY + 7);
-            
-            // PO Details (Right-aligned with From/To)
             doc.setFontSize(10);
             doc.setFont("helvetica", "bold");
             doc.setTextColor(secondaryColor);
@@ -1586,34 +1540,16 @@
             doc.setTextColor(textColor);
             doc.text(po.poNumber, rightAlignX, middleY, { align: 'right' });
             doc.text(formatDisplayDate(po.date), rightAlignX, middleY + 7, { align: 'right' });
-            
-            // --- 3. SEPARATOR LINE ---
             const lineY = middleY + 15;
             doc.setDrawColor(222, 226, 230);
             doc.setLineWidth(0.5);
             doc.line(margin, lineY, pageWidth - margin, lineY);
-
-            // --- 4. TABLE STYLING ---
             doc.autoTable({
-                head: [['S.No.', 'Item Name', 'Quantity']], 
-                body: tableData, 
-                startY: lineY + 5, // Start table immediately after the line
+                head: [['S.No.', 'Item Name', 'Quantity']], body: tableData, startY: lineY + 5,
                 theme: 'grid',
-                headStyles: { 
-                    fillColor: lemongrassGreen,
-                    textColor: [255, 255, 255],
-                    fontSize: 10,
-                    halign: 'center'
-                },
-                styles: {
-                    fontSize: 9,
-                    cellPadding: 1.5,
-                },
-                columnStyles: {
-                    0: { halign: 'center', cellWidth: 20 },
-                    1: { halign: 'left' },
-                    2: { halign: 'center', cellWidth: 30 }
-                },
+                headStyles: { fillColor: lemongrassGreen, textColor: [255, 255, 255], fontSize: 10, halign: 'center' },
+                styles: { fontSize: 9, cellPadding: 1.5 },
+                columnStyles: { 0: { halign: 'center', cellWidth: 20 }, 1: { halign: 'left' }, 2: { halign: 'center', cellWidth: 30 }},
                 didDrawPage: (data) => {
                     const footerText = "Thank you for your business!";
                     doc.setFontSize(10);
@@ -1621,7 +1557,6 @@
                     doc.text(footerText, margin, pageHeight - 10);
                 }
             });
-
             doc.save(`PO_${po.vendor}_${po.date}.pdf`);
         }
 
@@ -1637,12 +1572,8 @@
                 AppState.selectedBrand = brandPill.dataset.brand;
                 renderProductSearchResults(document.getElementById('productSearch').value);
             }
-            if (e.target.closest('#scroll-left-btn')) {
-                document.getElementById('brandFilterContainer').scrollLeft -= 200;
-            }
-            if (e.target.closest('#scroll-right-btn')) {
-                document.getElementById('brandFilterContainer').scrollLeft += 200;
-            }
+            if (e.target.closest('#scroll-left-btn')) { document.getElementById('brandFilterContainer').scrollLeft -= 200; }
+            if (e.target.closest('#scroll-right-btn')) { document.getElementById('brandFilterContainer').scrollLeft += 200; }
             const tile = e.target.closest('.tile');
             if (tile) { 
                 e.preventDefault(); 
@@ -1682,7 +1613,6 @@
             const poListItem = e.target.closest('.list-item[data-po-id]');
             if (poListItem) {
                 const poId = poListItem.dataset.poId;
-                if (!poId) return;
                 try {
                     const poDoc = await db.collection('purchaseOrders').doc(poId).get();
                     if (!poDoc.exists) { alert("Error: Could not find the selected Purchase Order."); return; }
@@ -1692,9 +1622,9 @@
                         <p><strong>Vendor:</strong> ${po.vendor}</p>
                         <p><strong>Date:</strong> ${formatDisplayDate(po.date)}</p>
                         <div class="detail-table-wrapper" style="margin-top: 10px;"><table class="detail-table">
-                            <thead><tr><th>S.No.</th><th>Product</th><th class="text-center">Qty</th><th class="text-right">Cost</th><th class="text-right">Total</th></tr></thead>
-                            <tbody>${po.items.map((item, index) => `<tr><td>${index + 1}</td><td>${item.itemName}</td><td class="text-center">${item.qty}</td><td class="text-right">₹${item.cost.toFixed(2)}</td><td class="text-right">₹${(item.qty * item.cost).toFixed(2)}</td></tr>`).join('')}</tbody>
-                            <tfoot><tr><td colspan="4">Grand Total</td><td class="text-right">₹${po.total.toFixed(2)}</td></tr></tfoot>
+                            <thead><tr><th>S.No.</th><th>Product</th><th class="text-center">Qty</th></tr></thead>
+                            <tbody>${po.items.map((item, index) => `<tr><td>${index + 1}</td><td>${item.itemName}</td><td class="text-center">${item.qty}</td></tr>`).join('')}</tbody>
+                            <tfoot><tr><td colspan="2">Grand Total</td><td class="text-right">₹${po.total.toFixed(2)}</td></tr></tfoot>
                         </table></div>`;
                     showModal('poDetailsModal');
                 } catch (error) { console.error("Failed to fetch PO details:", error); alert("An error occurred while fetching the PO details."); }
@@ -1783,7 +1713,7 @@
             const finalCost = parseFloat(form.dataset.defaultCost);
             const qtyInput = form.querySelector('.qty-input');
             const qty = parseInt(qtyInput.value) || 1;
-            const existingItem = AppState.newPO.items.find(i => i.itemCode === itemCode && i.cost === finalCost);
+            const existingItem = AppState.newPO.items.find(i => i.itemCode === itemCode);
             if (existingItem) {
                 existingItem.qty += qty;
             } else {
