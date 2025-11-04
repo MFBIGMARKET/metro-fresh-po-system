@@ -684,6 +684,15 @@
         .alphabet-letter:hover {
             background-color: var(--primary-color);
             color: white;
+
+        }
+        /* --- ADD THIS NEW RULE --- */
+        /* Style for the A-Z text to make it look like an icon */
+        #brand-alpha-filter-btn .alpha-filter-text {
+            font-weight: 600;
+            font-size: 16px;
+            line-height: 1; /* Ensures vertical centering */
+            color: var(--secondary-color);
         }
 
         /* --- END: NEW STYLES FOR ALPHABET FILTER --- */
@@ -865,7 +874,7 @@
                         <div id="brandFilterContainer"></div>
                         <button class="icon-button scroll-arrow" id="scroll-right-btn"><i class="material-icons">chevron_right</i></button>
                         <!-- ADD THIS BUTTON -->
-                        <button class="icon-button" id="brand-alpha-filter-btn"><i class="material-icons">sort_by_alpha</i></button>
+                        <button class="icon-button" id="brand-alpha-filter-btn"><span class="alpha-filter-text">A-Z</span></button>
                     </div>
                 </div>
 
@@ -1079,7 +1088,7 @@
         
         const SUPERMARKET_LAT = 11.99026695842943; 
         const SUPERMARKET_LON = 75.67567445952561;
-        const ALLOWED_RADIUS_METERS = 100000000000000000;
+        const ALLOWED_RADIUS_METERS = 1000;
 
         function getDistance(lat1, lon1, lat2, lon2) {
             const R = 6371e3;
