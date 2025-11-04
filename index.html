@@ -310,8 +310,15 @@
             padding: 16px;
             border-bottom: 1px solid #dee2e6;
             flex-shrink: 0;
+            position: relative; /* Add this for positioning context */
         }
-        .modal-title { font-size: 18px; font-weight: 600; }
+        .modal-title {
+            font-size: 18px;
+            font-weight: 600;
+            position: absolute; /* Take it out of the normal flow */
+            left: 50%;          /* Move its left edge to the center */
+            transform: translateX(-50%); /* Pull it back by half its own width */
+        }
         .modal-body { padding: 16px; overflow-y: auto; flex-grow: 1; }
         .modal-footer {
             padding: 16px;
@@ -594,7 +601,7 @@
         .brand-filter-container {
             display: flex;
             align-items: center;
-            gap: 8px;
+            /* No gap here, we'll use margins on the children */
             background-color: var(--card-bg);
             border-radius: var(--border-radius);
             padding: 8px;
@@ -648,6 +655,38 @@
         .scroll-arrow:hover {
             background-color: #f0f0f0;
         }
+        /* --- START: NEW STYLES FOR ALPHABET FILTER --- */
+
+        /* Style for the new alphabet filter button */
+        #brand-alpha-filter-btn {
+            flex-shrink: 0;
+            border: 1px solid #ced4da;
+            border-radius: 8px;
+            height: 48px;
+            width: 48px;
+            margin-left: 8px; /* Space between pill container and this button */
+        }
+
+        /* Grid layout for the alphabet letters in the modal */
+        #brandAlphabetList {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(50px, 1fr));
+            gap: 10px;
+            text-align: center;
+        }
+        .alphabet-letter {
+            padding: 12px 8px;
+            background-color: #f0f0f0;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .alphabet-letter:hover {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        /* --- END: NEW STYLES FOR ALPHABET FILTER --- */
 
         #adminContent .tile-grid {
             display: grid;
@@ -692,6 +731,59 @@
             .header .title { font-size: 20px; }
             .content { padding-left: 32px; padding-right: 32px; }
         }
+        /* Style for the password error message */
+        #passwordError {
+            font-size: 14px;
+            font-weight: 500;
+        }
+        /* --- START: STYLES FOR ENHANCED LOGIN MODAL --- */
+
+/* Target the password modal specifically for sizing */
+#passwordModal .modal-content {
+    max-width: 380px; /* A more compact width for a login form */
+}
+
+/* Style the input field inside the password modal */
+/* --- ADD THIS NEW RULE --- */
+        /* Center the label specifically inside the password modal */
+        #passwordModal .form-group label {
+            text-align: center;
+        }
+#passwordModal .form-control {
+    padding: 14px;
+    font-size: 18px;
+    border-radius: var(--border-radius);
+    border: 2px solid #ddd;
+    text-align: center; /* Center the typed password */
+    letter-spacing: 0.1em; /* Add spacing between characters */
+}
+
+#passwordModal .form-control:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.2);
+}
+
+/* Style the login button for full width and better presence */
+#passwordModal .btn-primary {
+    width: 100%;
+    padding: 14px;
+    font-size: 18px;
+    font-weight: 600;
+    border-radius: var(--border-radius);
+}
+
+/* Improve the modal body spacing */
+#passwordModal .modal-body {
+    padding: 24px 24px 16px 24px;
+}
+
+/* Adjust the footer for the full-width button */
+#passwordModal .modal-footer {
+    padding: 0 24px 24px 24px;
+    border-top: none; /* Remove the top border for a cleaner look */
+}
+
+/* --- END: STYLES FOR ENHANCED LOGIN MODAL --- */
     </style>
 </head>
 <body>
@@ -772,6 +864,8 @@
                         <button class="icon-button scroll-arrow" id="scroll-left-btn"><i class="material-icons">chevron_left</i></button>
                         <div id="brandFilterContainer"></div>
                         <button class="icon-button scroll-arrow" id="scroll-right-btn"><i class="material-icons">chevron_right</i></button>
+                        <!-- ADD THIS BUTTON -->
+                        <button class="icon-button" id="brand-alpha-filter-btn"><i class="material-icons">sort_by_alpha</i></button>
                     </div>
                 </div>
 
@@ -827,6 +921,37 @@
     </div>
 
     <!-- Modals -->
+     <!-- ADD THIS ENTIRE MODAL FOR THE PASSWORD PROMPT -->
+    <div id="passwordModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Admin Login</h3>
+                <button class="icon-button" data-close-modal="passwordModal"><i class="material-icons">close</i></button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="passwordInput">Password</label>
+                    <input type="password" id="passwordInput" class="form-control" placeholder="Enter admin password">
+                </div>
+                <p id="passwordError" style="color: var(--danger-color); display: none; text-align: center; margin-top: 10px;"></p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-primary" id="loginBtn">Login</button>
+            </div>
+        </div>
+    </div>
+    <!-- ADD THIS MODAL FOR THE BRAND ALPHABET FILTER -->
+    <div id="brandAlphabetModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Filter by Letter</h3>
+                <button class="icon-button" data-close-modal="brandAlphabetModal"><i class="material-icons">close</i></button>
+            </div>
+            <div class="modal-body" id="brandAlphabetList">
+                <!-- Alphabet will be generated here -->
+            </div>
+        </div>
+    </div>
     <div id="settingsModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
@@ -937,6 +1062,7 @@
     document.addEventListener('DOMContentLoaded', () => {
         
         let html5QrCode = null;
+        const ADMIN_PASSWORD = "Adm456";
     
         const AppState = {
             history: ['loginPage'],
@@ -953,7 +1079,7 @@
         
         const SUPERMARKET_LAT = 11.99026695842943; 
         const SUPERMARKET_LON = 75.67567445952561;
-        const ALLOWED_RADIUS_METERS = 1000;
+        const ALLOWED_RADIUS_METERS = 100000000000000000;
 
         function getDistance(lat1, lon1, lat2, lon2) {
             const R = 6371e3;
@@ -1027,6 +1153,12 @@
                 if (pageId === 'voucherPage') await renderVoucherPage();
             }
         }
+
+        // --- START: NEW PASSWORD PROTECTION LOGIC ---
+
+        
+
+        // --- END: NEW PASSWORD PROTECTION LOGIC ---
 
         async function goBack() {
             const currentPage = AppState.history[AppState.history.length - 1];
@@ -1327,6 +1459,26 @@
                 </table></div>`;
         }
 
+                // --- NEW LOGIN BUTTON LOGIC ---
+        document.getElementById('loginBtn').addEventListener('click', async () => {
+            const passwordInput = document.getElementById('passwordInput');
+            const passwordError = document.getElementById('passwordError');
+            const enteredPassword = passwordInput.value;
+
+            if (enteredPassword === ADMIN_PASSWORD) {
+                // SUCCESS: Password is correct
+                passwordInput.value = ''; // Clear the input
+                passwordError.style.display = 'none'; // Hide any previous errors
+                hideModal('passwordModal');
+                await navigateTo('adminPage'); // Navigate to the admin page
+            } else {
+                // FAILURE: Password is incorrect
+                passwordError.textContent = 'Incorrect password. Please try again.';
+                passwordError.style.display = 'block'; // Show the error message
+                passwordInput.value = ''; // Clear the input for the next attempt
+            }
+        });
+
         async function renderCategoryPage(category) {
             if (!category) return;
             AppState.currentCategory = category;
@@ -1589,7 +1741,13 @@
                 e.preventDefault(); 
                 AppState.currentDate = new Date(); 
                 AppState.adminDrilldown = []; 
-                await navigateTo(tile.dataset.page, { category: tile.dataset.category }); 
+                if (tile.dataset.page === 'adminPage') {
+                    // If the ADMIN tile is clicked, show the new styled modal
+                    showModal('passwordModal');
+                } else {
+                    // For all other tiles, navigate as usual
+                    await navigateTo(tile.dataset.page, { category: tile.dataset.category }); 
+                }
             }
             if (e.target.closest('.back-btn')) await goBack();
             if (e.target.closest('.calendar-btn')) { renderCalendar(); }
@@ -1698,6 +1856,31 @@
                     alert('Order deleted successfully.');
                     await goBack();
                 }
+            }
+             if (e.target.closest('#brand-alpha-filter-btn')) {
+                const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split('');
+                const brandAlphabetList = document.getElementById('brandAlphabetList');
+                brandAlphabetList.innerHTML = alphabet.map(letter => 
+                    `<div class="alphabet-letter" data-letter="${letter}">${letter}</div>`
+                ).join('');
+                showModal('brandAlphabetModal');
+            }
+
+            // Handle clicking a letter in the modal
+            const alphaLetter = e.target.closest('.alphabet-letter');
+            if (alphaLetter) {
+                const letter = alphaLetter.dataset.letter;
+                
+                // Find the first brand pill that starts with the selected letter
+                const targetBrandPill = document.querySelector(`.brand-pill[data-brand^="${letter}"]`);
+
+                if (targetBrandPill) {
+                    const container = document.getElementById('brandFilterContainer');
+                    // Scroll the container to bring the target pill into view
+                    container.scrollLeft = targetBrandPill.offsetLeft - container.offsetLeft - 10;
+                }
+                
+                hideModal('brandAlphabetModal');
             }
         });
         
