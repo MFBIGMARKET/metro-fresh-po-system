@@ -793,6 +793,12 @@
 }
 
 /* --- END: STYLES FOR ENHANCED LOGIN MODAL --- */
+/* --- START: NEW STYLE FOR PO DETAILS MODAL TABLE --- */
+        #poDetailsModal .detail-table td {
+            white-space: normal; /* Allows long text to wrap to the next line */
+            word-break: break-word; /* Helps break very long words without spaces */
+        }
+        /* --- END: NEW STYLE --- */
     </style>
 </head>
 <body>
@@ -1736,6 +1742,13 @@
                 const poId = e.target.closest('#editOrderBtn').dataset.poId;
                 await navigateTo('newOrderPage', { poId: poId });
             }
+
+
+                        if (e.target.closest('#modalEditBtn')) {
+                const poId = e.target.closest('#modalEditBtn').dataset.poId;
+                hideModal('poDetailsModal');
+                await navigateTo('newOrderPage', { poId: poId });
+            }
             const brandPill = e.target.closest('.brand-pill');
             if(brandPill) {
                 document.querySelectorAll('.brand-pill').forEach(p => p.classList.remove('active'));
@@ -1790,11 +1803,45 @@
             const poListItem = e.target.closest('.list-item[data-po-id]');
             if (poListItem) {
                 const poId = poListItem.dataset.poId;
+                if (!poId) return;
                 try {
                     const poDoc = await db.collection('purchaseOrders').doc(poId).get();
-                    if (!poDoc.exists) { alert("Error: Could not find the selected Purchase Order."); return; }
+                    if (!poDoc.exists) { 
+                        alert("Error: Could not find the selected Purchase Order."); 
+                        return; 
+                    }
                     const po = poDoc.data();
-                    document.getElementById('poDetailsTitle').textContent = `Details for ${po.poNumber}`;
+
+                    // --- START: NEW EDIT/APPROVED LOGIC ---
+
+                    // Check if the order has been approved
+                    const isApproved = await getApprovalStatus(poId);
+
+                    // Conditionally create the header action button (Edit or Approved icon)
+                    let headerActionsHTML = '';
+                    if (isApproved) {
+                        headerActionsHTML = `
+                            <i class="material-icons" style="color: var(--success-color);">check_circle</i>
+                        `;
+                    } else {
+                        headerActionsHTML = `
+                            <button class="icon-button" id="modalEditBtn" data-po-id="${poId}"><i class="material-icons">edit</i></button>
+                        `;
+                    }
+
+                    // Rebuild the modal header to include the new action button
+                    const poDetailsModal = document.getElementById('poDetailsModal');
+                    poDetailsModal.querySelector('.modal-header').innerHTML = `
+                        <h3 class="modal-title" id="poDetailsTitle">Details for ${po.poNumber}</h3>
+                        <div class="header-side right">
+                            ${headerActionsHTML}
+                            <button class="icon-button" data-close-modal="poDetailsModal"><i class="material-icons">close</i></button>
+                        </div>
+                    `;
+
+                    // --- END: NEW EDIT/APPROVED LOGIC ---
+                    
+                    // Populate the modal body (Note: Cost and Total columns are removed as requested)
                     document.getElementById('poDetailsBody').innerHTML = `
                         <p><strong>Vendor:</strong> ${po.vendor}</p>
                         <p><strong>Date:</strong> ${formatDisplayDate(po.date)}</p>
@@ -1803,8 +1850,13 @@
                             <tbody>${po.items.map((item, index) => `<tr><td>${index + 1}</td><td>${item.itemName}</td><td class="text-center">${item.qty}</td></tr>`).join('')}</tbody>
                             <tfoot><tr><td colspan="2">Grand Total</td><td class="text-right">₹${po.total.toFixed(2)}</td></tr></tfoot>
                         </table></div>`;
+                    
                     showModal('poDetailsModal');
-                } catch (error) { console.error("Failed to fetch PO details:", error); alert("An error occurred while fetching the PO details."); }
+
+                } catch (error) { 
+                    console.error("Failed to fetch PO details:", error); 
+                    alert("An error occurred while fetching the PO details."); 
+                }
             }
             if (e.target.closest('#cart-btn')) { renderCartModal(); showModal('cartModal'); }
             const vendorItem = e.target.closest('.vendor-search-item');
