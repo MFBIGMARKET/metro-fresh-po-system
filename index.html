@@ -147,8 +147,9 @@
             height: 100%;
             display: flex;
             flex-direction: column;
-            justify-content: center;
+            justify-content: flex-start; /* Changed */
             padding: 20px;
+            padding-top: 5vh; /* Changed */
         }
         .login-header {
             text-align: center;
@@ -202,10 +203,40 @@
         .tile-VOUCHER .material-icons { color: var(--voucher-color); }
         .tile-PROMOTER-ITEMS .material-icons { color: var(--promoter-items-color); }
         .tile-ADMIN .material-icons { color: var(--danger-color); }
+        .tile-OTHER .material-icons { color: #607D8B; } /* NEW */
         .tile span {
             font-weight: 500;
             text-align: center;
         }
+
+        /* --- START: NEW STYLES FOR OTHER PURCHASES TILE --- */
+        .other-purchase-tile-container {
+            width: 100%;
+            max-width: 800px;
+            margin: 16px auto 0 auto;
+            padding: 0;
+        }
+        @media (max-width: 767px) {
+            .other-purchase-tile-container {
+                padding: 0 16px; /* Match grid padding on mobile */
+            }
+        }
+        .other-purchase-tile-container .tile {
+            width: 100%;
+            aspect-ratio: auto;
+            height: 80px;
+            flex-direction: row;
+            justify-content: center;
+            gap: 16px;
+        }
+        .other-purchase-tile-container .tile .material-icons {
+             font-size: 32px;
+             margin-bottom: 0;
+        }
+        .other-purchase-tile-container .tile span {
+            font-size: 16px;
+        }
+       /* --- END: NEW STYLES --- */
 
         .progress-container {
             padding: 16px;
@@ -828,6 +859,13 @@
                     <a class="tile tile-PROMOTER-ITEMS" data-page="categoryPage" data-category="PROMOTER ITEMS"><i class="material-icons">campaign</i><span>PROMOTER ITEMS</span></a>
                     <a class="tile tile-ADMIN" data-page="adminPage"><i class="material-icons">admin_panel_settings</i><span>ADMIN</span></a>
                 </div>
+                <!-- NEW TILE CONTAINER FOR OTHER PURCHASES -->
+                <div class="other-purchase-tile-container">
+                     <a class="tile tile-OTHER" data-page="otherPurchaseListPage" data-category="OTHER PURCHASES">
+                        <i class="material-icons">shopping_cart_checkout</i>
+                        <span>OTHER PURCHASES</span>
+                    </a>
+                </div>
             </div>
         </div>
 
@@ -879,7 +917,6 @@
                         <button class="icon-button scroll-arrow" id="scroll-left-btn"><i class="material-icons">chevron_left</i></button>
                         <div id="brandFilterContainer"></div>
                         <button class="icon-button scroll-arrow" id="scroll-right-btn"><i class="material-icons">chevron_right</i></button>
-                        <!-- ADD THIS BUTTON -->
                         <button class="icon-button" id="brand-alpha-filter-btn"><span class="alpha-filter-text">A-Z</span></button>
                     </div>
                 </div>
@@ -933,10 +970,77 @@
             </div>
             <button class="fab" id="addVoucherBtn"><i class="material-icons">add</i></button>
         </div>
+
+        <!-- PAGE FOR LISTING "OTHER PURCHASE" ORDERS -->
+        <div id="otherPurchaseListPage" class="page">
+             <div class="header">
+                <div class="header-side left">
+                    <button class="icon-button back-btn"><i class="material-icons">arrow_back</i></button>
+                </div>
+                <div class="title">Other Purchases</div>
+                <div class="header-side right">
+                    <button class="icon-button calendar-btn"><i class="material-icons">calendar_today</i></button>
+                </div>
+            </div>
+            <div class="content" id="otherPurchaseListContainer">
+                <!-- Purchase ORDERS will be rendered here -->
+            </div>
+            <button class="fab" id="addOtherPurchaseBtn"><i class="material-icons">add</i></button>
+        </div>
+
+        <!-- PAGE FOR CREATING/EDITING A MULTI-ITEM "OTHER PURCHASE" ORDER -->
+        <div id="newOtherPurchaseOrderPage" class="page">
+            <div class="header">
+                <div class="header-side left">
+                    <button class="icon-button back-btn"><i class="material-icons">arrow_back</i></button>
+                </div>
+                <div class="title" id="otherPoPageTitle">New Other Purchase</div>
+                <div class="header-side right"></div>
+            </div>
+            <div class="content">
+                <div class="form-group">
+                    <label for="otherVendorSearch">Search for Vendor</label>
+                    <input type="text" id="otherVendorSearch" class="form-control" placeholder="Type to search vendors...">
+                    <div id="otherVendorSearchResults" class="search-results-list"></div>
+                </div>
+
+                <div class="product-card" style="margin-bottom: 20px;">
+                    <form id="addOtherItemForm">
+                        <div class="form-group">
+                            <label for="otherItemName">Item Name</label>
+                            <input type="text" id="otherItemName" class="form-control" required>
+                        </div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                            <div class="form-group">
+                                <label for="otherItemCost">Cost</label>
+                                <input type="number" id="otherItemCost" class="form-control" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="otherItemQty">Qty</label>
+                                <input type="number" id="otherItemQty" class="form-control" value="1" required>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary" style="width:100%;">Add Item to Order</button>
+                    </form>
+                </div>
+
+                <div class="form-group">
+                    <label>Current Order Items</label>
+                    <div id="otherPurchaseCartContainer">
+                         <div class="empty-state" style="padding:10px 0;"><p>No items added yet.</p></div>
+                    </div>
+                </div>
+                <hr>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px;">
+                    <h3 id="otherPurchaseTotal" style="font-size: 20px;">Total: ₹0.00</h3>
+                    <button class="btn btn-success" id="saveOtherPurchaseOrderBtn">Save Order</button>
+                </div>
+            </div>
+        </div>
+
     </div>
 
     <!-- Modals -->
-     <!-- ADD THIS ENTIRE MODAL FOR THE PASSWORD PROMPT -->
     <div id="passwordModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
@@ -955,7 +1059,6 @@
             </div>
         </div>
     </div>
-    <!-- ADD THIS MODAL FOR THE BRAND ALPHABET FILTER -->
     <div id="brandAlphabetModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
@@ -1086,6 +1189,7 @@
             adminDrilldown: [],
             dataEntryDrilldown: [],
             newPO: { vendor: null, items: [], total: 0 },
+            newOtherPO: { vendor: null, items: [], total: 0 },
             appLogo: null,
             itemCache: [],
             vendorCache: [],
@@ -1164,16 +1268,12 @@
                 }
                 if (pageId === 'categoryPage') await renderCategoryPage(context.category);
                 if (pageId === 'adminPage') await renderAdminPage();
-                if (pageId === 'newOrderPage') await renderNewOrderPage(context.poId);
+                if (pageId === 'newOrderPage') await renderNewOrderPage(context);
                 if (pageId === 'voucherPage') await renderVoucherPage();
+                if (pageId === 'otherPurchaseListPage') await renderOtherPurchaseListPage();
+                if (pageId === 'newOtherPurchaseOrderPage') await renderNewOtherPurchaseOrderPage(context);
             }
         }
-
-        // --- START: NEW PASSWORD PROTECTION LOGIC ---
-
-        
-
-        // --- END: NEW PASSWORD PROTECTION LOGIC ---
 
         async function goBack() {
             const currentPage = AppState.history[AppState.history.length - 1];
@@ -1187,15 +1287,15 @@
                 }
                 return;
             }
-            if (currentPage === 'newOrderPage') {
+            if (currentPage === 'newOrderPage' || currentPage === 'newOtherPurchaseOrderPage') {
                 AppState.itemCache = [];
-                AppState.vendorCache = [];
                 AppState.editingPoId = null;
                 AppState.selectedBrand = 'All';
             }
             if (AppState.history.length > 1) {
                 AppState.history.pop();
-                await navigateTo(AppState.history[AppState.history.length - 1], { category: AppState.currentCategory }, false);
+                const previousPage = AppState.history[AppState.history.length - 1];
+                await navigateTo(previousPage, { category: AppState.currentCategory }, false);
             } else {
                 navigateTo('loginPage', {}, false);
             }
@@ -1213,8 +1313,6 @@
             const qrCodeSuccessCallback = (decodedText, decodedResult) => {
                 stopScanner();
                 
-                // --- DEFINITIVE SCANNER FIX ---
-                // Now only checks for the standardized 'EAN Code' property.
                 const foundItem = AppState.itemCache.find(item => 
                     item['EAN Code'] && String(item['EAN Code']).trim() === decodedText
                 );
@@ -1315,6 +1413,94 @@
             const snapshot = await db.collection('vouchers').where('date', '==', dateString).orderBy('timestamp', 'desc').get();
             return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         }
+        
+        async function getOtherPurchasesForDate(dateString) {
+            const snapshot = await db.collection('otherPurchases')
+                .where('date', '==', dateString)
+                .orderBy('timestamp', 'desc')
+                .get();
+            return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        }
+
+        async function renderOtherPurchaseListPage() {
+            const container = document.getElementById('otherPurchaseListContainer');
+            const dateString = toLocalDateString(AppState.currentDate);
+            const orders = await getOtherPurchasesForDate(dateString);
+
+            if (orders.length === 0) {
+                container.innerHTML = `<div class="empty-state"><i class="material-icons">inbox</i><p>No orders for today.</p></div>`;
+            } else {
+                container.innerHTML = `<ul class="item-list">${orders.map(po => `
+                    <li class="list-item other-purchase-order-item" data-id="${po.id}">
+                        <div class="list-item-main">
+                            <span class="list-item-title">${po.vendor}</span>
+                            <span class="list-item-subtitle">${po.poNumber} &bull; ${po.items.length} items</span>
+                        </div>
+                        <span class="list-item-amount">₹${po.total.toFixed(2)}</span>
+                    </li>`).join('')}</ul>`;
+            }
+        }
+
+        async function renderNewOtherPurchaseOrderPage(context = {}) {
+            const editingPoId = context.poId;
+            AppState.editingPoId = editingPoId;
+
+            const titleEl = document.getElementById('otherPoPageTitle');
+            const saveBtn = document.getElementById('saveOtherPurchaseOrderBtn');
+            const vendorSearch = document.getElementById('otherVendorSearch');
+
+            if (AppState.vendorCache.length === 0) {
+                const vendorsSnapshot = await db.collection('vendors').orderBy('Customer').get();
+                AppState.vendorCache = vendorsSnapshot.docs.map(doc => doc.data());
+            }
+
+            if (editingPoId) {
+                titleEl.textContent = "Edit Other Purchase";
+                saveBtn.textContent = "Update Order";
+
+                const poDoc = await db.collection('otherPurchases').doc(editingPoId).get();
+                if (poDoc.exists) {
+                    const po = poDoc.data();
+                    AppState.newOtherPO = { vendor: po.vendor, items: po.items, total: po.total };
+                    vendorSearch.value = po.vendor;
+                    vendorSearch.disabled = true;
+                }
+            } else {
+                titleEl.textContent = "New Other Purchase";
+                saveBtn.textContent = "Save Order";
+                
+                AppState.newOtherPO = { vendor: null, items: [], total: 0 };
+                vendorSearch.value = '';
+                vendorSearch.disabled = false;
+                document.getElementById('otherVendorSearchResults').innerHTML = '';
+            }
+
+            renderOtherPurchaseCart(); 
+        }
+
+        function renderOtherPurchaseCart() {
+            const container = document.getElementById('otherPurchaseCartContainer');
+            const totalEl = document.getElementById('otherPurchaseTotal');
+            const { items } = AppState.newOtherPO;
+
+            if (items.length === 0) {
+                container.innerHTML = `<div class="empty-state" style="padding:10px 0;"><p>No items added yet.</p></div>`;
+            } else {
+                container.innerHTML = `<ul class="item-list">${items.map((item, index) => `
+                    <li class="list-item" style="padding: 8px; margin-bottom: 5px; cursor:default;">
+                        <div class="list-item-main">
+                            <span class="list-item-title">${item.itemName}</span>
+                            <span class="list-item-subtitle">${item.qty} x ₹${item.cost.toFixed(2)}</span>
+                        </div>
+                        <button class="icon-button remove-other-item-btn" data-index="${index}">
+                            <i class="material-icons" style="color:var(--danger-color)">delete</i>
+                        </button>
+                    </li>`).join('')}</ul>`;
+            }
+            
+            AppState.newOtherPO.total = items.reduce((sum, item) => sum + (item.qty * item.cost), 0);
+            totalEl.textContent = `Total: ₹${AppState.newOtherPO.total.toFixed(2)}`;
+        }
 
         async function getAllPOsForDate(dateString) {
              const snapshot = await db.collection('purchaseOrders').where('date', '==', dateString).get();
@@ -1374,6 +1560,7 @@
         async function renderAdminDashboard(dateString) {
             const allPOs = await getAllPOsForDate(dateString);
             const allVouchers = await getVouchersForDate(dateString);
+            const otherPurchases = await getOtherPurchasesForDate(dateString);
             const categories = ['FOOD', 'NONFOOD', 'REPACK', 'BAKESTORY', 'F&V', 'PROMOTER ITEMS'];
             let totals = { ALL: 0, ...Object.fromEntries(categories.map(cat => [cat, 0])) };
             categories.forEach(cat => {
@@ -1381,7 +1568,8 @@
                 totals.ALL += totals[cat];
             });
             const voucherTotal = allVouchers.reduce((sum, v) => sum + v.amount, 0);
-            totals.ALL += voucherTotal;
+            const otherPurchasesTotal = otherPurchases.reduce((sum, p) => sum + p.total, 0);
+            totals.ALL += voucherTotal + otherPurchasesTotal;
             const adminContent = document.getElementById('adminContent');
             adminContent.innerHTML = updateAdminProgressBar(totals.ALL) + `<div id="adminDashboardContainer"></div>`;
             document.getElementById('adminDashboardContainer').innerHTML = `<div class="tile-grid">
@@ -1397,10 +1585,31 @@
                     <span class="admin-tile-title">VOUCHER</span>
                     <span class="admin-tile-amount">₹${(voucherTotal || 0).toFixed(2)}</span>
                 </a>
+                <a class="admin-summary-tile admin-category-tile" data-category="OTHER PURCHASES" style="border-top-color: #607D8B;">
+                    <span class="admin-tile-title">OTHER PURCHASES</span>
+                    <span class="admin-tile-amount">₹${otherPurchasesTotal.toFixed(2)}</span>
+                </a>
             </div>`;
         }
 
         async function renderAdminCategoryDetail(container, category, dateString) {
+             if (category === 'OTHER PURCHASES') {
+                const purchases = await getOtherPurchasesForDate(dateString);
+                if (purchases.length === 0) {
+                    container.innerHTML = `<div class="empty-state"><i class="material-icons">info</i><p>No other purchases on this date.</p></div>`;
+                    return;
+                }
+                container.innerHTML = `<div class="drilldown-header">Other Purchase Orders</div>
+                    <ul class="item-list">${purchases.map(p => `
+                        <li class="list-item admin-po-tile" data-po-id="${p.id}"> 
+                            <div class="list-item-main">
+                                <span class="list-item-title">${p.vendor}</span>
+                                <span class="list-item-subtitle">${p.poNumber}</span>
+                            </div>
+                            <span class="list-item-amount">₹${p.total.toFixed(2)}</span>
+                        </li>`).join('')}</ul>`;
+                return;
+            }
              if (category === 'VOUCHER') {
                 const vouchers = await getVouchersForDate(dateString);
                 const headerTotals = vouchers.reduce((acc, v) => {
@@ -1436,6 +1645,8 @@
         }
         
         async function renderAdminVendorDetail(container, category, poId) {
+            const collectionName = category === 'OTHER PURCHASES' ? 'otherPurchases' : 'purchaseOrders';
+            
             if (category === 'VOUCHER') {
                 const vendorOrHeader = poId;
                 const dateString = toLocalDateString(AppState.currentDate);
@@ -1448,7 +1659,8 @@
                     </table></div>`;
                 return;
             }
-            const poDoc = await db.collection('purchaseOrders').doc(poId).get();
+
+            const poDoc = await db.collection(collectionName).doc(poId).get();
             if (!poDoc.exists) {
                 container.innerHTML = `<div class="empty-state"><p>Error: Purchase Order not found.</p></div>`;
                 return;
@@ -1458,12 +1670,13 @@
             const actionButtonHTML = isApproved
                 ? `<button class="btn btn-success" id="downloadPdfBtn" data-po-id="${poId}"><i class="material-icons" style="font-size: 18px; vertical-align: middle; margin-right: 5px;">picture_as_pdf</i>Download PDF</button>`
                 : `<button class="btn btn-primary" id="approveBtn" data-po-id="${poId}"><i class="material-icons" style="font-size: 18px; vertical-align: middle; margin-right: 5px;">check_circle</i>Approve Order</button>`;
+            
             container.innerHTML = `
                 <div class="drilldown-header">
                     <span>Details for ${po.poNumber} (${po.vendor})</span>
                     <div class="drilldown-header-actions">
                         ${actionButtonHTML}
-                        <button class="btn btn-primary" id="editOrderBtn" data-po-id="${poId}"><i class="material-icons" style="font-size: 18px; vertical-align: middle;">edit</i></button>
+                        <button class="btn btn-primary" id="editOrderBtn" data-po-id="${poId}" data-category="${po.category}"><i class="material-icons" style="font-size: 18px; vertical-align: middle;">edit</i></button>
                         <button class="btn btn-danger" id="deleteOrderBtn" data-po-id="${poId}"><i class="material-icons" style="font-size: 18px; vertical-align: middle;">delete</i></button>
                     </div>
                 </div>
@@ -1474,23 +1687,20 @@
                 </table></div>`;
         }
 
-                // --- NEW LOGIN BUTTON LOGIC ---
         document.getElementById('loginBtn').addEventListener('click', async () => {
             const passwordInput = document.getElementById('passwordInput');
             const passwordError = document.getElementById('passwordError');
             const enteredPassword = passwordInput.value;
 
             if (enteredPassword === ADMIN_PASSWORD) {
-                // SUCCESS: Password is correct
-                passwordInput.value = ''; // Clear the input
-                passwordError.style.display = 'none'; // Hide any previous errors
+                passwordInput.value = '';
+                passwordError.style.display = 'none';
                 hideModal('passwordModal');
-                await navigateTo('adminPage'); // Navigate to the admin page
+                await navigateTo('adminPage');
             } else {
-                // FAILURE: Password is incorrect
                 passwordError.textContent = 'Incorrect password. Please try again.';
-                passwordError.style.display = 'block'; // Show the error message
-                passwordInput.value = ''; // Clear the input for the next attempt
+                passwordError.style.display = 'block';
+                passwordInput.value = '';
             }
         });
 
@@ -1535,14 +1745,17 @@
             text.textContent = `₹${total.toFixed(0)} / ₹${max.toLocaleString()}`;
         }
 
-        async function renderNewOrderPage(editingPoId = null) {
+        async function renderNewOrderPage(context = {}) {
+            const editingPoId = context.poId;
             const pageTitle = document.getElementById('poPageTitle');
             const saveBtn = document.getElementById('savePoBtn');
             const vendorSearch = document.getElementById('vendorSearch');
             AppState.editingPoId = editingPoId;
+
             document.getElementById('productSearch').value = '';
             document.getElementById('vendorSearchResults').innerHTML = '';
             document.getElementById('productSearchResultsGrid').innerHTML = `<div class="empty-state"><i class="material-icons">search</i><p>Start typing to find products</p></div>`;
+            
             if (editingPoId) {
                 pageTitle.textContent = "Edit Purchase Order";
                 saveBtn.textContent = "Update PO";
@@ -1562,8 +1775,10 @@
             }
             updateCartBadge();
             updatePOTotal();
-            const vendorsSnapshot = await db.collection('vendors').orderBy('Customer').get();
-            AppState.vendorCache = vendorsSnapshot.docs.map(doc => doc.data());
+            if(AppState.vendorCache.length === 0){
+                 const vendorsSnapshot = await db.collection('vendors').orderBy('Customer').get();
+                AppState.vendorCache = vendorsSnapshot.docs.map(doc => doc.data());
+            }
             document.getElementById('productSearch').placeholder = "Loading items...";
             AppState.itemCache = await getItemsForCategory(AppState.currentCategory);
             renderBrandFilters();
@@ -1632,8 +1847,14 @@
         }
         
         function renderVendorSearchResults(query) {
-            const container = document.getElementById('vendorSearchResults');
+            const currentPage = AppState.history[AppState.history.length-1];
+            const container = (currentPage === 'newOtherPurchaseOrderPage') 
+                ? document.getElementById('otherVendorSearchResults') 
+                : document.getElementById('vendorSearchResults');
+            
+            if (!container) return;
             if (!query || query.length < 1) { container.innerHTML = ''; return; }
+            
             const filteredVendors = AppState.vendorCache.filter(vendor => vendor.Customer && vendor.Customer.toLowerCase().includes(query.toLowerCase())).slice(0, 10);
             container.innerHTML = filteredVendors.map(vendor => `<div class="vendor-search-item" data-vendor-name="${vendor.Customer}">${vendor.Customer}</div>`).join('');
         }
@@ -1672,8 +1893,12 @@
             const pageWidth = doc.internal.pageSize.getWidth();
             const pageHeight = doc.internal.pageSize.getHeight();
             const margin = 14;
-            const poDoc = await db.collection('purchaseOrders').doc(poId).get();
+            let poDoc = await db.collection('purchaseOrders').doc(poId).get();
+            if (!poDoc.exists) { 
+                poDoc = await db.collection('otherPurchases').doc(poId).get();
+            }
             if (!poDoc.exists) { alert('Could not find order to generate PDF.'); return; }
+
             const po = poDoc.data();
             const tableData = po.items.map((item, index) => [ index + 1, item.itemName, item.qty ]);
             const lemongrassGreen = '#8BC34A';
@@ -1739,16 +1964,30 @@
 
         document.body.addEventListener('click', async (e) => {
             if (e.target.closest('#editOrderBtn')) {
-                const poId = e.target.closest('#editOrderBtn').dataset.poId;
-                await navigateTo('newOrderPage', { poId: poId });
+                const button = e.target.closest('#editOrderBtn');
+                const poId = button.dataset.poId;
+                const category = button.dataset.category;
+
+                if (category === 'OTHER PURCHASES') {
+                    await navigateTo('newOtherPurchaseOrderPage', { poId: poId });
+                } else {
+                    await navigateTo('newOrderPage', { poId: poId });
+                }
             }
 
-
-                        if (e.target.closest('#modalEditBtn')) {
-                const poId = e.target.closest('#modalEditBtn').dataset.poId;
+            if (e.target.closest('#modalEditBtn')) {
+                const button = e.target.closest('#modalEditBtn');
+                const poId = button.dataset.poId;
+                const category = button.dataset.category;
                 hideModal('poDetailsModal');
-                await navigateTo('newOrderPage', { poId: poId });
+
+                if (category === 'OTHER PURCHASES') {
+                    await navigateTo('newOtherPurchaseOrderPage', { poId: poId });
+                } else {
+                    await navigateTo('newOrderPage', { poId: poId });
+                }
             }
+
             const brandPill = e.target.closest('.brand-pill');
             if(brandPill) {
                 document.querySelectorAll('.brand-pill').forEach(p => p.classList.remove('active'));
@@ -1758,23 +1997,24 @@
             }
             if (e.target.closest('#scroll-left-btn')) { document.getElementById('brandFilterContainer').scrollLeft -= 200; }
             if (e.target.closest('#scroll-right-btn')) { document.getElementById('brandFilterContainer').scrollLeft += 200; }
+            
             const tile = e.target.closest('.tile');
             if (tile) { 
                 e.preventDefault(); 
                 AppState.currentDate = new Date(); 
                 AppState.adminDrilldown = []; 
                 if (tile.dataset.page === 'adminPage') {
-                    // If the ADMIN tile is clicked, show the new styled modal
                     showModal('passwordModal');
                 } else {
-                    // For all other tiles, navigate as usual
                     await navigateTo(tile.dataset.page, { category: tile.dataset.category }); 
                 }
             }
+
             if (e.target.closest('.back-btn')) await goBack();
             if (e.target.closest('.calendar-btn')) { renderCalendar(); }
             if (e.target.closest('#prevMonth')) { AppState.currentDate.setMonth(AppState.currentDate.getMonth() - 1); renderCalendar(); }
             if (e.target.closest('#nextMonth')) { AppState.currentDate.setMonth(AppState.currentDate.getMonth() + 1); renderCalendar(); }
+            
             const calDay = e.target.closest('.calendar-day:not(.empty)');
             if (calDay) {
                 AppState.currentDate = new Date(AppState.currentDate.getFullYear(), AppState.currentDate.getMonth(), parseInt(calDay.dataset.day));
@@ -1784,9 +2024,11 @@
                     case 'categoryPage': await renderCategoryPage(AppState.currentCategory); break;
                     case 'adminPage': await renderAdminPage(); break;
                     case 'voucherPage': await renderVoucherPage(); break;
+                    case 'otherPurchaseListPage': await renderOtherPurchaseListPage(); break;
                 }
             }
             if (e.target.closest('#addPoBtn')) await navigateTo('newOrderPage');
+            if (e.target.closest('#addOtherPurchaseBtn')) await navigateTo('newOtherPurchaseOrderPage');
             if (e.target.closest('#addVoucherBtn')) showModal('newVoucherModal');
             if (e.target.closest('[data-close-modal]')) {
                 const modalId = e.target.closest('.modal').id;
@@ -1794,79 +2036,110 @@
                 else { hideModal(modalId); }
             }
             if (e.target.closest('#scan-btn')) { await startScanner(); }
+            
             const adminCatTile = e.target.closest('.admin-category-tile');
             if (adminCatTile) { AppState.adminDrilldown.push(adminCatTile.dataset.category); await renderAdminPage(); }
+            
             const adminVendorTile = e.target.closest('.admin-vendor-tile');
             if (adminVendorTile) { AppState.adminDrilldown.push(adminVendorTile.dataset.vendor); await renderAdminPage(); }
+            
             const adminPOTile = e.target.closest('.admin-po-tile');
             if (adminPOTile) { AppState.adminDrilldown.push(adminPOTile.dataset.poId); await renderAdminPage(); }
-            const poListItem = e.target.closest('.list-item[data-po-id]');
+            
+            const poListItem = e.target.closest('.list-item[data-po-id], .other-purchase-order-item[data-id]');
             if (poListItem) {
-                const poId = poListItem.dataset.poId;
-                if (!poId) return;
+                const poId = poListItem.dataset.poId || poListItem.dataset.id;
+                if (!poId) return; 
+                
+                const currentPage = AppState.history[AppState.history.length-1];
+                const collectionName = (currentPage === 'otherPurchaseListPage' || AppState.adminDrilldown[0] === 'OTHER PURCHASES') ? 'otherPurchases' : 'purchaseOrders';
+
                 try {
-                    const poDoc = await db.collection('purchaseOrders').doc(poId).get();
-                    if (!poDoc.exists) { 
-                        alert("Error: Could not find the selected Purchase Order."); 
-                        return; 
-                    }
+                    const poDoc = await db.collection(collectionName).doc(poId).get();
+                    if (!poDoc.exists) { alert("Error: Could not find the selected order."); return; }
+                    
                     const po = poDoc.data();
-
-                    // --- START: NEW EDIT/APPROVED LOGIC ---
-
-                    // Check if the order has been approved
                     const isApproved = await getApprovalStatus(poId);
 
-                    // Conditionally create the header action button (Edit or Approved icon)
-                    let headerActionsHTML = '';
-                    if (isApproved) {
-                        headerActionsHTML = `
-                            <i class="material-icons" style="color: var(--success-color);">check_circle</i>
-                        `;
-                    } else {
-                        headerActionsHTML = `
-                            <button class="icon-button" id="modalEditBtn" data-po-id="${poId}"><i class="material-icons">edit</i></button>
-                        `;
-                    }
+                    let headerActionsHTML = isApproved
+                        ? `<i class="material-icons" style="color: var(--success-color);">check_circle</i>`
+                        : `<button class="icon-button" id="modalEditBtn" data-po-id="${poId}" data-category="${po.category}"><i class="material-icons">edit</i></button>`;
 
-                    // Rebuild the modal header to include the new action button
                     const poDetailsModal = document.getElementById('poDetailsModal');
                     poDetailsModal.querySelector('.modal-header').innerHTML = `
                         <h3 class="modal-title" id="poDetailsTitle">Details for ${po.poNumber}</h3>
                         <div class="header-side right">
                             ${headerActionsHTML}
                             <button class="icon-button" data-close-modal="poDetailsModal"><i class="material-icons">close</i></button>
-                        </div>
-                    `;
-
-                    // --- END: NEW EDIT/APPROVED LOGIC ---
+                        </div>`;
                     
-                    // Populate the modal body (Note: Cost and Total columns are removed as requested)
-                    document.getElementById('poDetailsBody').innerHTML = `
-                        <p><strong>Vendor:</strong> ${po.vendor}</p>
-                        <p><strong>Date:</strong> ${formatDisplayDate(po.date)}</p>
-                        <div class="detail-table-wrapper" style="margin-top: 10px;"><table class="detail-table">
-                            <thead><tr><th>S.No.</th><th>Product</th><th class="text-center">Qty</th></tr></thead>
-                            <tbody>${po.items.map((item, index) => `<tr><td>${index + 1}</td><td>${item.itemName}</td><td class="text-center">${item.qty}</td></tr>`).join('')}</tbody>
-                            <tfoot><tr><td colspan="2">Grand Total</td><td class="text-right">₹${po.total.toFixed(2)}</td></tr></tfoot>
-                        </table></div>`;
+                    // Replace the old block with this new one
+document.getElementById('poDetailsBody').innerHTML = `
+    <p><strong>Vendor:</strong> ${po.vendor}</p>
+    <p><strong>Date:</strong> ${formatDisplayDate(po.date)}</p>
+    <div class="detail-table-wrapper" style="margin-top: 10px;"><table class="detail-table">
+        <!-- 1. Header is simplified: Cost and Total columns are removed -->
+        <thead>
+            <tr>
+                <th>S.No.</th>
+                <th>Product</th>
+                <th class="text-center">Qty</th>
+            </tr>
+        </thead>
+
+        <!-- 2. Body is simplified: Cost and Total cells are removed -->
+        <tbody>
+            ${po.items.map((item, index) => `
+                <tr>
+                    <td>${index + 1}</td>
+                    <td>${item.itemName}</td>
+                    <td class="text-center">${item.qty}</td>
+                </tr>
+            `).join('')}
+        </tbody>
+
+        <!-- 3. Footer is fixed: colspan is adjusted for the new column count (3) -->
+        
+<tfoot>
+    <tr>
+        <!-- 1. Make the row a single cell spanning all 3 columns -->
+        <td colspan="3" style="padding: 12px 15px;">
+        
+            <!-- 2. Use a flexbox container inside the cell -->
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+            
+                <!-- 3. The two text elements will now be perfectly spaced apart -->
+                <span>Grand Total</span>
+                <span>₹${po.total.toFixed(2)}</span>
+                
+            </div>
+        </td>
+    </tr>
+</tfoot>
+    </table></div>`;
                     
                     showModal('poDetailsModal');
-
-                } catch (error) { 
-                    console.error("Failed to fetch PO details:", error); 
-                    alert("An error occurred while fetching the PO details."); 
-                }
+                } catch (error) { console.error("Failed to fetch order details:", error); alert("An error occurred while fetching order details."); }
             }
+
             if (e.target.closest('#cart-btn')) { renderCartModal(); showModal('cartModal'); }
+            
             const vendorItem = e.target.closest('.vendor-search-item');
             if (vendorItem) {
                 const vendorName = vendorItem.dataset.vendorName;
-                AppState.newPO.vendor = vendorName;
-                document.getElementById('vendorSearch').value = vendorName;
-                document.getElementById('vendorSearchResults').innerHTML = '';
-                await loadDraftPO();
+                const currentPage = AppState.history[AppState.history.length-1];
+                if (currentPage === 'newOtherPurchaseOrderPage') {
+                    AppState.newOtherPO.vendor = vendorName;
+                    document.getElementById('otherVendorSearch').value = vendorName;
+                    document.getElementById('otherVendorSearchResults').innerHTML = '';
+                } else {
+                    AppState.newPO.vendor = vendorName;
+                    document.getElementById('vendorSearch').value = vendorName;
+                    document.getElementById('vendorSearchResults').innerHTML = '';
+                    await loadDraftPO();
+                }
             }
+
             const removeItemBtn = e.target.closest('.po-item-remove');
             if (removeItemBtn) {
                 AppState.newPO.items.splice(parseInt(removeItemBtn.dataset.index), 1);
@@ -1874,6 +2147,57 @@
                 updateCartBadge();
                 if (!AppState.editingPoId) await updateDraftPO();
             }
+
+            const removeOtherItemBtn = e.target.closest('.remove-other-item-btn');
+            if (removeOtherItemBtn) {
+                const index = parseInt(removeOtherItemBtn.dataset.index);
+                AppState.newOtherPO.items.splice(index, 1);
+                renderOtherPurchaseCart();
+            }
+
+            if (e.target.closest('#saveOtherPurchaseOrderBtn')) {
+                const { vendor, items, total } = AppState.newOtherPO;
+                if (!vendor) return alert('Please select a vendor.');
+                if (items.length === 0) return alert('Please add at least one item to the order.');
+
+                try {
+                    if (AppState.editingPoId) {
+                        const poRef = db.collection('otherPurchases').doc(AppState.editingPoId);
+                        await poRef.update({ items: items, total: total });
+                        
+                        alert(`Order updated successfully!`);
+                        AppState.editingPoId = null;
+                        
+                        // Navigate back intelligently
+                        AppState.history.pop();
+                        const previousPage = AppState.history[AppState.history.length -1];
+                        await navigateTo(previousPage, {}, false);
+                        if(previousPage === 'adminPage') {
+                            await renderAdminPage();
+                        }
+
+                    } else {
+                        const counterRef = db.collection('counters').doc('opCounter');
+                        let newPoNumber;
+                        await db.runTransaction(async (transaction) => {
+                            const counterDoc = await transaction.get(counterRef);
+                            const currentCount = counterDoc.exists ? counterDoc.data().count : 0;
+                            const newCount = currentCount + 1;
+                            transaction.set(counterRef, { count: newCount }, { merge: true });
+                            newPoNumber = `OP-${newCount.toString().padStart(4, '0')}`;
+                        });
+
+                        const newOrder = {
+                            poNumber: newPoNumber, category: 'OTHER PURCHASES', timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                            date: toLocalDateString(new Date()), vendor, items, total
+                        };
+                        await db.collection('otherPurchases').add(newOrder);
+                        alert(`Order ${newPoNumber} saved successfully!`);
+                        await goBack();
+                    }
+                } catch (error) { console.error("Error saving Other Purchase Order: ", error); alert("Failed to save the order."); }
+            }
+
             const saveVoucherBtn = e.target.closest('#saveVoucherBtn');
             if (saveVoucherBtn) {
                 const header = document.getElementById('voucherHeader').value.trim();
@@ -1890,10 +2214,14 @@
                 } catch (error) { console.error("Error saving voucher: ", error); alert("Failed to save voucher."); }
             }
             if (e.target.closest('#settingsBtn')) { loadLogoPreview(); showModal('settingsModal'); }
+            
             const approveBtn = e.target.closest('#approveBtn');
             if (approveBtn) {
                 const poId = approveBtn.dataset.poId;
-                const poDoc = await db.collection('purchaseOrders').doc(poId).get();
+                const category = AppState.adminDrilldown[0];
+                const collectionName = category === 'OTHER PURCHASES' ? 'otherPurchases' : 'purchaseOrders';
+                const poDoc = await db.collection(collectionName).doc(poId).get();
+
                 if(poDoc.exists) {
                     const poData = poDoc.data();
                     await db.collection('approvals').doc(poId).set({
@@ -1902,14 +2230,18 @@
                     await renderAdminPage(); 
                 }
             }
+            
             const downloadPdfBtn = e.target.closest('#downloadPdfBtn');
             if (downloadPdfBtn) { await generatePDF(downloadPdfBtn.dataset.poId); }
+            
             const deleteBtn = e.target.closest('#deleteOrderBtn');
             if (deleteBtn) {
                 if (confirm('Are you sure you want to delete this specific order? This action cannot be undone.')) {
                     const poId = deleteBtn.dataset.poId;
+                    const category = AppState.adminDrilldown[0];
+                    const collectionName = category === 'OTHER PURCHASES' ? 'otherPurchases' : 'purchaseOrders';
                     const batch = db.batch();
-                    const poRef = db.collection('purchaseOrders').doc(poId);
+                    const poRef = db.collection(collectionName).doc(poId);
                     const approvalRef = db.collection('approvals').doc(poId);
                     batch.delete(poRef);
                     batch.delete(approvalRef);
@@ -1918,6 +2250,7 @@
                     await goBack();
                 }
             }
+            
              if (e.target.closest('#brand-alpha-filter-btn')) {
                 const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split('');
                 const brandAlphabetList = document.getElementById('brandAlphabetList');
@@ -1927,20 +2260,14 @@
                 showModal('brandAlphabetModal');
             }
 
-            // Handle clicking a letter in the modal
             const alphaLetter = e.target.closest('.alphabet-letter');
             if (alphaLetter) {
                 const letter = alphaLetter.dataset.letter;
-                
-                // Find the first brand pill that starts with the selected letter
                 const targetBrandPill = document.querySelector(`.brand-pill[data-brand^="${letter}"]`);
-
                 if (targetBrandPill) {
                     const container = document.getElementById('brandFilterContainer');
-                    // Scroll the container to bring the target pill into view
                     container.scrollLeft = targetBrandPill.offsetLeft - container.offsetLeft - 10;
                 }
-                
                 hideModal('brandAlphabetModal');
             }
         });
@@ -1987,6 +2314,28 @@
             }, 1000);
         });
 
+        document.getElementById('addOtherItemForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const itemNameInput = document.getElementById('otherItemName');
+            const costInput = document.getElementById('otherItemCost');
+            const qtyInput = document.getElementById('otherItemQty');
+
+            const itemName = itemNameInput.value.trim();
+            const cost = parseFloat(costInput.value);
+            const qty = parseInt(qtyInput.value);
+
+            if (itemName && cost > 0 && qty > 0) {
+                AppState.newOtherPO.items.push({ itemName, cost, qty });
+                renderOtherPurchaseCart();
+                itemNameInput.value = '';
+                costInput.value = '';
+                qtyInput.value = '1';
+                itemNameInput.focus();
+            } else {
+                alert('Please enter valid item details.');
+            }
+        });
+
         const handleFileUpload = (file, onComplete) => {
             if (!file) return;
             Papa.parse(file, { header: true, skipEmptyLines: true, complete: res => onComplete(res.data), error: err => alert('CSV Error: ' + err.message) });
@@ -2019,19 +2368,14 @@
 
                         if (itemCode && itemName && itemCode.trim() !== '' && itemName.trim() !== '') {
                             const docRef = db.collection('items').doc();
-
-                            // --- DEFINITIVE MAPPING FIX ---
                             const newItem = {
-                                'Item Code': itemCode,
-                                'Item Name': itemName,
+                                'Item Code': itemCode, 'Item Name': itemName,
                                 'MRP': parseFloat(cleanedItem.MRP || 0),
                                 'Cost': parseFloat(cleanedItem['Purchase Cost'] || cleanedItem.Cost || 0),
                                 'BRAND': cleanedItem.BRAND || 'Unbranded',
-                                // This ensures the property is ALWAYS 'EAN Code' in the database
                                 'EAN Code': cleanedItem['EAN code'] || cleanedItem['EAN Code'] || '',
                                 'category': category
                             };
-                            
                             batch.set(docRef, newItem);
                             validItemsCount++;
                         }
@@ -2048,6 +2392,7 @@
 
         const debouncedVendorSearch = debounce((event) => renderVendorSearchResults(event.target.value));
         document.getElementById('vendorSearch').addEventListener('keyup', debouncedVendorSearch);
+        document.getElementById('otherVendorSearch').addEventListener('keyup', debouncedVendorSearch);
         
         document.getElementById('savePoBtn').addEventListener('click', async () => {
             const { vendor, items, total } = AppState.newPO;
