@@ -197,7 +197,7 @@
         .tile-FOOD .material-icons { color: var(--success-color); }
         .tile-NONFOOD .material-icons { color: var(--primary-color); }
         .tile-REPACK .material-icons { color: var(--warning-color); }
-        .tile-HWP .material-icons { color: var(--info-color); }
+        .tile-BAKESTORY .material-icons { color: var(--info-color); }
         .tile-FV .material-icons { color: var(--fv-color); }
         .tile-VOUCHER .material-icons { color: var(--voucher-color); }
         .tile-PROMOTER-ITEMS .material-icons { color: var(--promoter-items-color); }
@@ -396,7 +396,7 @@
         .admin-tile-FOOD { border-top-color: var(--success-color); }
         .admin-tile-NONFOOD { border-top-color: var(--primary-color); }
         .admin-tile-REPACK { border-top-color: var(--warning-color); }
-        .admin-tile-HWP { border-top-color: var(--info-color); }
+        .admin-tile-BAKESTORY { border-top-color: var(--info-color); }
         .admin-tile-FV { border-top-color: var(--fv-color); }
         .admin-tile-VOUCHER { border-top-color: var(--voucher-color); }
         .admin-tile-PROMOTER-ITEMS { border-top-color: var(--promoter-items-color); }
@@ -822,7 +822,7 @@
                     <a class="tile tile-FOOD" data-page="categoryPage" data-category="FOOD"><i class="material-icons">shopping_basket</i><span>FOOD</span></a>
                     <a class="tile tile-NONFOOD" data-page="categoryPage" data-category="NONFOOD"><i class="material-icons">inventory_2</i><span>NONFOOD</span></a>
                     <a class="tile tile-REPACK" data-page="categoryPage" data-category="REPACK"><i class="material-icons">restart_alt</i><span>REPACK</span></a>
-                    <a class="tile tile-HWP" data-page="categoryPage" data-category="HWP"><i class="material-icons">home</i><span>HWP</span></a>
+                    <a class="tile tile-BAKESTORY" data-page="categoryPage" data-category="BAKESTORY"><i class="material-icons">bakery_dining</i><span>BAKESTORY</span></a>
                     <a class="tile tile-FV" data-page="categoryPage" data-category="F&V"><i class="material-icons">grass</i><span>F&V</span></a>
                     <a class="tile tile-VOUCHER" data-page="voucherPage"><i class="material-icons">receipt_long</i><span>VOUCHER</span></a>
                     <a class="tile tile-PROMOTER-ITEMS" data-page="categoryPage" data-category="PROMOTER ITEMS"><i class="material-icons">campaign</i><span>PROMOTER ITEMS</span></a>
@@ -993,7 +993,7 @@
                 <div class="form-group"><label>FOOD</label><input type="file" class="form-control item-upload" data-category="FOOD" accept=".csv"></div>
                 <div class="form-group"><label>NONFOOD</label><input type="file" class="form-control item-upload" data-category="NONFOOD" accept=".csv"></div>
                 <div class="form-group"><label>REPACK</label><input type="file" class="form-control item-upload" data-category="REPACK" accept=".csv"></div>
-                <div class="form-group"><label>HWP</label><input type="file" class="form-control item-upload" data-category="HWP" accept=".csv"></div>
+                <div class="form-group"><label>BAKESTORY</label><input type="file" class="form-control item-upload" data-category="BAKESTORY" accept=".csv"></div>
                 <div class="form-group"><label>F&V</label><input type="file" class="form-control item-upload" data-category="F&V" accept=".csv"></div>
                 <div class="form-group"><label>PROMOTER ITEMS</label><input type="file" class="form-control item-upload" data-category="PROMOTER ITEMS" accept=".csv"></div>
             </div>
@@ -1094,7 +1094,7 @@
         
         const SUPERMARKET_LAT = 11.989993133727276; 
         const SUPERMARKET_LON = 75.67562654875947;
-        const ALLOWED_RADIUS_METERS = 300;
+        const ALLOWED_RADIUS_METERS = 3000;
 
         function getDistance(lat1, lon1, lat2, lon2) {
             const R = 6371e3;
@@ -1147,7 +1147,7 @@
                 case 'FOOD': return 'shopping_basket';
                 case 'NONFOOD': return 'inventory_2';
                 case 'REPACK': return 'restart_alt';
-                case 'HWP': return 'home';
+                case 'BAKESTORY': return 'bakery_dining';
                 case 'F&V': return 'grass';
                 case 'PROMOTER ITEMS': return 'campaign';
                 default: return 'label';
@@ -1374,7 +1374,7 @@
         async function renderAdminDashboard(dateString) {
             const allPOs = await getAllPOsForDate(dateString);
             const allVouchers = await getVouchersForDate(dateString);
-            const categories = ['FOOD', 'NONFOOD', 'REPACK', 'HWP', 'F&V', 'PROMOTER ITEMS'];
+            const categories = ['FOOD', 'NONFOOD', 'REPACK', 'BAKESTORY', 'F&V', 'PROMOTER ITEMS'];
             let totals = { ALL: 0, ...Object.fromEntries(categories.map(cat => [cat, 0])) };
             categories.forEach(cat => {
                 totals[cat] = allPOs.filter(po => po.category === cat).reduce((sum, po) => sum + po.total, 0);
