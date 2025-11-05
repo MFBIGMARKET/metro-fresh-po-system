@@ -147,9 +147,9 @@
             height: 100%;
             display: flex;
             flex-direction: column;
-            justify-content: flex-start; /* Changed */
+            justify-content: flex-start;
             padding: 20px;
-            padding-top: 5vh; /* Changed */
+            padding-top: 5vh;
         }
         .login-header {
             text-align: center;
@@ -203,13 +203,12 @@
         .tile-VOUCHER .material-icons { color: var(--voucher-color); }
         .tile-PROMOTER-ITEMS .material-icons { color: var(--promoter-items-color); }
         .tile-ADMIN .material-icons { color: var(--danger-color); }
-        .tile-OTHER .material-icons { color: #607D8B; } /* NEW */
+        .tile-OTHER .material-icons { color: #607D8B; }
         .tile span {
             font-weight: 500;
             text-align: center;
         }
 
-        /* --- START: NEW STYLES FOR OTHER PURCHASES TILE --- */
         .other-purchase-tile-container {
             width: 100%;
             max-width: 800px;
@@ -218,7 +217,7 @@
         }
         @media (max-width: 767px) {
             .other-purchase-tile-container {
-                padding: 0 16px; /* Match grid padding on mobile */
+                padding: 0 16px;
             }
         }
         .other-purchase-tile-container .tile {
@@ -236,7 +235,6 @@
         .other-purchase-tile-container .tile span {
             font-size: 16px;
         }
-       /* --- END: NEW STYLES --- */
 
         .progress-container {
             padding: 16px;
@@ -341,14 +339,14 @@
             padding: 16px;
             border-bottom: 1px solid #dee2e6;
             flex-shrink: 0;
-            position: relative; /* Add this for positioning context */
+            position: relative;
         }
         .modal-title {
             font-size: 18px;
             font-weight: 600;
-            position: absolute; /* Take it out of the normal flow */
-            left: 50%;          /* Move its left edge to the center */
-            transform: translateX(-50%); /* Pull it back by half its own width */
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
         }
         .modal-body { padding: 16px; overflow-y: auto; flex-grow: 1; }
         .modal-footer {
@@ -632,7 +630,6 @@
         .brand-filter-container {
             display: flex;
             align-items: center;
-            /* No gap here, we'll use margins on the children */
             background-color: var(--card-bg);
             border-radius: var(--border-radius);
             padding: 8px;
@@ -686,19 +683,16 @@
         .scroll-arrow:hover {
             background-color: #f0f0f0;
         }
-        /* --- START: NEW STYLES FOR ALPHABET FILTER --- */
-
-        /* Style for the new alphabet filter button */
+        
         #brand-alpha-filter-btn {
             flex-shrink: 0;
             border: 1px solid #ced4da;
             border-radius: 8px;
             height: 48px;
             width: 48px;
-            margin-left: 8px; /* Space between pill container and this button */
+            margin-left: 8px;
         }
 
-        /* Grid layout for the alphabet letters in the modal */
         #brandAlphabetList {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(50px, 1fr));
@@ -717,16 +711,12 @@
             color: white;
 
         }
-        /* --- ADD THIS NEW RULE --- */
-        /* Style for the A-Z text to make it look like an icon */
         #brand-alpha-filter-btn .alpha-filter-text {
             font-weight: 600;
             font-size: 16px;
-            line-height: 1; /* Ensures vertical centering */
+            line-height: 1;
             color: var(--secondary-color);
         }
-
-        /* --- END: NEW STYLES FOR ALPHABET FILTER --- */
 
         #adminContent .tile-grid {
             display: grid;
@@ -771,65 +761,49 @@
             .header .title { font-size: 20px; }
             .content { padding-left: 32px; padding-right: 32px; }
         }
-        /* Style for the password error message */
+        
         #passwordError {
             font-size: 14px;
             font-weight: 500;
         }
-        /* --- START: STYLES FOR ENHANCED LOGIN MODAL --- */
-
-/* Target the password modal specifically for sizing */
-#passwordModal .modal-content {
-    max-width: 380px; /* A more compact width for a login form */
-}
-
-/* Style the input field inside the password modal */
-/* --- ADD THIS NEW RULE --- */
-        /* Center the label specifically inside the password modal */
+        
+        #passwordModal .modal-content {
+            max-width: 380px;
+        }
         #passwordModal .form-group label {
             text-align: center;
         }
-#passwordModal .form-control {
-    padding: 14px;
-    font-size: 18px;
-    border-radius: var(--border-radius);
-    border: 2px solid #ddd;
-    text-align: center; /* Center the typed password */
-    letter-spacing: 0.1em; /* Add spacing between characters */
-}
-
-#passwordModal .form-control:focus {
-    border-color: var(--primary-color);
-    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.2);
-}
-
-/* Style the login button for full width and better presence */
-#passwordModal .btn-primary {
-    width: 100%;
-    padding: 14px;
-    font-size: 18px;
-    font-weight: 600;
-    border-radius: var(--border-radius);
-}
-
-/* Improve the modal body spacing */
-#passwordModal .modal-body {
-    padding: 24px 24px 16px 24px;
-}
-
-/* Adjust the footer for the full-width button */
-#passwordModal .modal-footer {
-    padding: 0 24px 24px 24px;
-    border-top: none; /* Remove the top border for a cleaner look */
-}
-
-/* --- END: STYLES FOR ENHANCED LOGIN MODAL --- */
-/* --- START: NEW STYLE FOR PO DETAILS MODAL TABLE --- */
-        #poDetailsModal .detail-table td {
-            white-space: normal; /* Allows long text to wrap to the next line */
-            word-break: break-word; /* Helps break very long words without spaces */
+        #passwordModal .form-control {
+            padding: 14px;
+            font-size: 18px;
+            border-radius: var(--border-radius);
+            border: 2px solid #ddd;
+            text-align: center;
+            letter-spacing: 0.1em;
         }
-        /* --- END: NEW STYLE --- */
+        #passwordModal .form-control:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.2);
+        }
+        #passwordModal .btn-primary {
+            width: 100%;
+            padding: 14px;
+            font-size: 18px;
+            font-weight: 600;
+            border-radius: var(--border-radius);
+        }
+        #passwordModal .modal-body {
+            padding: 24px 24px 16px 24px;
+        }
+        #passwordModal .modal-footer {
+            padding: 0 24px 24px 24px;
+            border-top: none;
+        }
+
+        #poDetailsModal .detail-table td {
+            white-space: normal;
+            word-break: break-word;
+        }
     </style>
 </head>
 <body>
@@ -859,7 +833,6 @@
                     <a class="tile tile-PROMOTER-ITEMS" data-page="categoryPage" data-category="PROMOTER ITEMS"><i class="material-icons">campaign</i><span>PROMOTER ITEMS</span></a>
                     <a class="tile tile-ADMIN" data-page="adminPage"><i class="material-icons">admin_panel_settings</i><span>ADMIN</span></a>
                 </div>
-                <!-- NEW TILE CONTAINER FOR OTHER PURCHASES -->
                 <div class="other-purchase-tile-container">
                      <a class="tile tile-OTHER" data-page="otherPurchaseListPage" data-category="OTHER PURCHASES">
                         <i class="material-icons">shopping_cart_checkout</i>
@@ -944,9 +917,7 @@
                     <button class="icon-button" id="settingsBtn"><i class="material-icons">settings</i></button>
                 </div>
             </div>
-            <div class="content" id="adminContent">
-                <!-- Admin content is rendered dynamically here -->
-            </div>
+            <div class="content" id="adminContent"></div>
         </div>
 
         <div id="voucherPage" class="page">
@@ -971,7 +942,6 @@
             <button class="fab" id="addVoucherBtn"><i class="material-icons">add</i></button>
         </div>
 
-        <!-- PAGE FOR LISTING "OTHER PURCHASE" ORDERS -->
         <div id="otherPurchaseListPage" class="page">
              <div class="header">
                 <div class="header-side left">
@@ -982,13 +952,10 @@
                     <button class="icon-button calendar-btn"><i class="material-icons">calendar_today</i></button>
                 </div>
             </div>
-            <div class="content" id="otherPurchaseListContainer">
-                <!-- Purchase ORDERS will be rendered here -->
-            </div>
+            <div class="content" id="otherPurchaseListContainer"></div>
             <button class="fab" id="addOtherPurchaseBtn"><i class="material-icons">add</i></button>
         </div>
 
-        <!-- PAGE FOR CREATING/EDITING A MULTI-ITEM "OTHER PURCHASE" ORDER -->
         <div id="newOtherPurchaseOrderPage" class="page">
             <div class="header">
                 <div class="header-side left">
@@ -1065,9 +1032,7 @@
                 <h3 class="modal-title">Filter by Letter</h3>
                 <button class="icon-button" data-close-modal="brandAlphabetModal"><i class="material-icons">close</i></button>
             </div>
-            <div class="modal-body" id="brandAlphabetList">
-                <!-- Alphabet will be generated here -->
-            </div>
+            <div class="modal-body" id="brandAlphabetList"></div>
         </div>
     </div>
     <div id="settingsModal" class="modal">
@@ -1080,6 +1045,10 @@
                 <div class="form-group">
                     <label for="vendorFileUpload">Upload Vendor List (.csv)</label>
                     <input type="file" id="vendorFileUpload" class="form-control" accept=".csv">
+                </div>
+                <div class="form-group">
+                    <label for="voucherHeadsUpload">Upload Voucher Heads (.csv)</label>
+                    <input type="file" id="voucherHeadsUpload" class="form-control" accept=".csv">
                 </div>
                 <hr style="margin: 20px 0;">
                 <div class="form-group">
@@ -1117,9 +1086,11 @@
                 <button class="icon-button" data-close-modal="newVoucherModal"><i class="material-icons">close</i></button>
             </div>
             <div class="modal-body">
+                <input type="hidden" id="editingVoucherId">
                 <div class="form-group">
                     <label for="voucherHeader">Header</label>
-                    <input type="text" id="voucherHeader" class="form-control" placeholder="e.g., Office Supplies">
+                    <input type="text" id="voucherHeader" class="form-control" placeholder="Search heads or type a new one..." autocomplete="off">
+                    <div id="voucherHeaderResults" class="search-results-list" style="position: absolute; width: 90%; max-width: 450px;"></div>
                 </div>
                 <div class="form-group">
                     <label for="voucherAmount">Amount</label>
@@ -1132,6 +1103,20 @@
         </div>
     </div>
     
+    <div id="voucherDetailsModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Voucher Details</h3>
+                <button class="icon-button" data-close-modal="voucherDetailsModal"><i class="material-icons">close</i></button>
+            </div>
+            <div class="modal-body" id="voucherDetailsBody"></div>
+            <div class="modal-footer">
+                <button class="btn btn-danger" id="deleteVoucherBtn">Delete</button>
+                <button class="btn btn-primary" id="editVoucherBtn">Edit</button>
+            </div>
+        </div>
+    </div>
+
     <div id="calendarModal" class="modal">
         <div class="modal-content"><div class="modal-body" id="calendarContainer"></div></div>
     </div>
@@ -1187,7 +1172,6 @@
             currentCategory: null,
             currentDate: new Date(),
             adminDrilldown: [],
-            dataEntryDrilldown: [],
             newPO: { vendor: null, items: [], total: 0 },
             newOtherPO: { vendor: null, items: [], total: 0 },
             appLogo: null,
@@ -1226,10 +1210,13 @@
                     if (distance <= ALLOWED_RADIUS_METERS) {
                         blocker.style.display = 'none';
                         appContainer.style.display = 'block';
+                    } else {
+                         blocker.style.display = 'flex';
                     }
                 },
                 () => {
                     blocker.querySelector('p').textContent = "Location access was denied. Please enable location services to use the app.";
+                     blocker.style.display = 'flex';
                 }
             );
         }
@@ -1244,18 +1231,6 @@
                     func.apply(this, args);
                 }, delay);
             };
-        }
-
-        function getCategoryIcon(category) {
-            switch (category) {
-                case 'FOOD': return 'shopping_basket';
-                case 'NONFOOD': return 'inventory_2';
-                case 'REPACK': return 'restart_alt';
-                case 'BAKESTORY': return 'bakery_dining';
-                case 'F&V': return 'grass';
-                case 'PROMOTER ITEMS': return 'campaign';
-                default: return 'label';
-            }
         }
 
         async function navigateTo(pageId, context = {}, addToHistory = true) {
@@ -1277,21 +1252,16 @@
 
         async function goBack() {
             const currentPage = AppState.history[AppState.history.length - 1];
-            if (currentPage === 'adminPage') {
-                if (AppState.adminDrilldown.length > 0) {
-                    AppState.adminDrilldown.pop();
-                    await renderAdminPage();
-                } else {
-                    navigateTo('loginPage', {}, false);
-                    AppState.history = ['loginPage']; 
-                }
+            if (currentPage === 'adminPage' && AppState.adminDrilldown.length > 0) {
+                AppState.adminDrilldown.pop();
+                await renderAdminPage();
                 return;
             }
+            
             if (currentPage === 'newOrderPage' || currentPage === 'newOtherPurchaseOrderPage') {
-                AppState.itemCache = [];
                 AppState.editingPoId = null;
-                AppState.selectedBrand = 'All';
             }
+
             if (AppState.history.length > 1) {
                 AppState.history.pop();
                 const previousPage = AppState.history[AppState.history.length - 1];
@@ -1731,7 +1701,12 @@
             const filteredVouchers = await getVouchersForDate(dateString);
             container.innerHTML = filteredVouchers.length === 0
                 ? `<div class="empty-state"><i class="material-icons">receipt_long</i><p>No vouchers for today.</p></div>`
-                : `<ul class="item-list">${filteredVouchers.map(v => `<li class="list-item" style="cursor:default;"><span class="list-item-title">${v.header}</span><span class="list-item-amount">₹${v.amount.toFixed(2)}</span></li>`).join('')}</ul>`;
+                : `<ul class="item-list">${filteredVouchers.map(v => `
+                    <li class="list-item voucher-list-item" data-id="${v.id}" style="cursor:pointer;">
+                        <span class="list-item-title">${v.header}</span>
+                        <span class="list-item-amount">₹${v.amount.toFixed(2)}</span>
+                    </li>
+                `).join('')}</ul>`;
             updateProgressBar(filteredVouchers, 'voucher');
         }
 
@@ -2073,59 +2048,96 @@
                             <button class="icon-button" data-close-modal="poDetailsModal"><i class="material-icons">close</i></button>
                         </div>`;
                     
-                    // Replace the old block with this new one
-document.getElementById('poDetailsBody').innerHTML = `
-    <p><strong>Vendor:</strong> ${po.vendor}</p>
-    <p><strong>Date:</strong> ${formatDisplayDate(po.date)}</p>
-    <div class="detail-table-wrapper" style="margin-top: 10px;"><table class="detail-table">
-        <!-- 1. Header is simplified: Cost and Total columns are removed -->
-        <thead>
-            <tr>
-                <th>S.No.</th>
-                <th>Product</th>
-                <th class="text-center">Qty</th>
-            </tr>
-        </thead>
-
-        <!-- 2. Body is simplified: Cost and Total cells are removed -->
-        <tbody>
-            ${po.items.map((item, index) => `
-                <tr>
-                    <td>${index + 1}</td>
-                    <td>${item.itemName}</td>
-                    <td class="text-center">${item.qty}</td>
-                </tr>
-            `).join('')}
-        </tbody>
-
-        <!-- 3. Footer is fixed: colspan is adjusted for the new column count (3) -->
-        
-<tfoot>
-    <tr>
-        <!-- 1. Make the row a single cell spanning all 3 columns -->
-        <td colspan="3" style="padding: 12px 15px;">
-        
-            <!-- 2. Use a flexbox container inside the cell -->
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-            
-                <!-- 3. The two text elements will now be perfectly spaced apart -->
-                <span>Grand Total</span>
-                <span>₹${po.total.toFixed(2)}</span>
-                
-            </div>
-        </td>
-    </tr>
-</tfoot>
-    </table></div>`;
+                    document.getElementById('poDetailsBody').innerHTML = `
+                        <p><strong>Vendor:</strong> ${po.vendor}</p>
+                        <p><strong>Date:</strong> ${formatDisplayDate(po.date)}</p>
+                        <div class="detail-table-wrapper" style="margin-top: 10px;"><table class="detail-table">
+                            <thead>
+                                <tr>
+                                    <th>S.No.</th>
+                                    <th>Product</th>
+                                    <th class="text-center">Qty</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${po.items.map((item, index) => `
+                                    <tr>
+                                        <td>${index + 1}</td>
+                                        <td>${item.itemName}</td>
+                                        <td class="text-center">${item.qty}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                            <tfoot>
+                                <tr>
+                                    <td colspan="3" style="padding: 12px 15px;">
+                                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                                            <span>Grand Total</span>
+                                            <span>₹${po.total.toFixed(2)}</span>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tfoot>
+                        </table></div>`;
                     
                     showModal('poDetailsModal');
                 } catch (error) { console.error("Failed to fetch order details:", error); alert("An error occurred while fetching order details."); }
             }
 
+            const voucherListItem = e.target.closest('.voucher-list-item');
+            if (voucherListItem) {
+                const voucherId = voucherListItem.dataset.id;
+                const header = voucherListItem.querySelector('.list-item-title').textContent;
+                const amountText = voucherListItem.querySelector('.list-item-amount').textContent;
+                
+                document.getElementById('voucherDetailsBody').innerHTML = `
+                    <p><strong>Header:</strong> ${header}</p>
+                    <p><strong>Amount:</strong> ${amountText}</p>
+                `;
+
+                document.getElementById('editVoucherBtn').dataset.id = voucherId;
+                document.getElementById('editVoucherBtn').dataset.header = header;
+                document.getElementById('editVoucherBtn').dataset.amount = amountText.replace('₹', '');
+                document.getElementById('deleteVoucherBtn').dataset.id = voucherId;
+
+                showModal('voucherDetailsModal');
+            }
+
+            if (e.target.closest('#deleteVoucherBtn')) {
+                if (confirm('Are you sure you want to delete this voucher? This action cannot be undone.')) {
+                    const voucherId = e.target.closest('#deleteVoucherBtn').dataset.id;
+                    try {
+                        await db.collection('vouchers').doc(voucherId).delete();
+                        hideModal('voucherDetailsModal');
+                        await renderVoucherList();
+                        alert('Voucher deleted successfully.');
+                    } catch (error) {
+                        alert('Failed to delete voucher.');
+                        console.error("Error deleting voucher:", error);
+                    }
+                }
+            }
+
+            if (e.target.closest('#editVoucherBtn')) {
+                const button = e.target.closest('#editVoucherBtn');
+                const voucherId = button.dataset.id;
+                const header = button.dataset.header;
+                const amount = button.dataset.amount;
+
+                hideModal('voucherDetailsModal');
+
+                document.getElementById('newVoucherModal').querySelector('.modal-title').textContent = 'Edit Voucher';
+                document.getElementById('editingVoucherId').value = voucherId;
+                document.getElementById('voucherHeader').value = header;
+                document.getElementById('voucherAmount').value = parseFloat(amount);
+                
+                showModal('newVoucherModal');
+            }
+
             if (e.target.closest('#cart-btn')) { renderCartModal(); showModal('cartModal'); }
             
             const vendorItem = e.target.closest('.vendor-search-item');
-            if (vendorItem) {
+            if (vendorItem && !e.target.closest('#voucherHeaderResults')) {
                 const vendorName = vendorItem.dataset.vendorName;
                 const currentPage = AppState.history[AppState.history.length-1];
                 if (currentPage === 'newOtherPurchaseOrderPage') {
@@ -2138,6 +2150,13 @@ document.getElementById('poDetailsBody').innerHTML = `
                     document.getElementById('vendorSearchResults').innerHTML = '';
                     await loadDraftPO();
                 }
+            }
+
+            const voucherHeadItem = e.target.closest('#voucherHeaderResults .vendor-search-item');
+            if (voucherHeadItem) {
+                const headName = voucherHeadItem.dataset.head;
+                document.getElementById('voucherHeader').value = headName;
+                document.getElementById('voucherHeaderResults').innerHTML = '';
             }
 
             const removeItemBtn = e.target.closest('.po-item-remove');
@@ -2163,16 +2182,16 @@ document.getElementById('poDetailsBody').innerHTML = `
                 try {
                     if (AppState.editingPoId) {
                         const poRef = db.collection('otherPurchases').doc(AppState.editingPoId);
-                        await poRef.update({ items: items, total: total });
+                        await poRef.update({ items: items, total: total, vendor: vendor });
                         
                         alert(`Order updated successfully!`);
                         AppState.editingPoId = null;
                         
-                        // Navigate back intelligently
-                        AppState.history.pop();
-                        const previousPage = AppState.history[AppState.history.length -1];
+                        AppState.history.pop(); 
+                        const previousPage = AppState.history[AppState.history.length-1];
                         await navigateTo(previousPage, {}, false);
                         if(previousPage === 'adminPage') {
+                            AppState.adminDrilldown.pop();
                             await renderAdminPage();
                         }
 
@@ -2200,18 +2219,46 @@ document.getElementById('poDetailsBody').innerHTML = `
 
             const saveVoucherBtn = e.target.closest('#saveVoucherBtn');
             if (saveVoucherBtn) {
+                const editingId = document.getElementById('editingVoucherId').value;
                 const header = document.getElementById('voucherHeader').value.trim();
                 const amount = parseFloat(document.getElementById('voucherAmount').value);
-                if (!header || isNaN(amount) || amount <= 0) { alert('Please enter a valid header and amount.'); return; }
-                const newVoucher = { timestamp: firebase.firestore.FieldValue.serverTimestamp(), date: toLocalDateString(new Date()), header, amount };
+
+                if (!header || isNaN(amount) || amount <= 0) {
+                    alert('Please enter a valid header and amount.');
+                    return;
+                }
+
                 try {
-                    await db.collection('vouchers').add(newVoucher);
+                    if (editingId) {
+                        const voucherRef = db.collection('vouchers').doc(editingId);
+                        await voucherRef.update({ header: header, amount: amount });
+                        alert('Voucher updated successfully!');
+                    } else {
+                        const newVoucher = { 
+                            timestamp: firebase.firestore.FieldValue.serverTimestamp(), 
+                            date: toLocalDateString(new Date()), 
+                            header, 
+                            amount 
+                        };
+                        await db.collection('vouchers').add(newVoucher);
+                        alert('Voucher saved successfully!');
+                    }
+
+                    document.getElementById('newVoucherModal').querySelector('.modal-title').textContent = 'New Voucher';
+                    document.getElementById('editingVoucherId').value = '';
                     document.getElementById('voucherHeader').value = '';
                     document.getElementById('voucherAmount').value = '';
+                    document.getElementById('voucherHeaderResults').innerHTML = '';
+
                     hideModal('newVoucherModal');
-                    if(AppState.history.includes('voucherPage')) await renderVoucherList();
-                    alert('Voucher saved successfully!');
-                } catch (error) { console.error("Error saving voucher: ", error); alert("Failed to save voucher."); }
+                    if(AppState.history[AppState.history.length-1] === 'voucherPage') {
+                        await renderVoucherList();
+                    }
+
+                } catch (error) {
+                    console.error("Error saving voucher: ", error);
+                    alert("Failed to save voucher.");
+                }
             }
             if (e.target.closest('#settingsBtn')) { loadLogoPreview(); showModal('settingsModal'); }
             
@@ -2350,22 +2397,33 @@ document.getElementById('poDetailsBody').innerHTML = `
             });
         });
         
+        document.getElementById('voucherHeadsUpload').addEventListener('change', e => {
+            handleFileUpload(e.target.files[0], (data) => {
+                if (data.length === 0 || !data[0]['Voucher Heads']) {
+                    alert('Error: CSV file must contain a column named "Voucher Heads".');
+                    return;
+                }
+                const heads = data
+                    .map(row => row['Voucher Heads'] ? row['Voucher Heads'].trim() : '')
+                    .filter(head => head !== '');
+                localStorage.setItem('voucherHeads', JSON.stringify(heads));
+                alert(`Successfully uploaded and saved ${heads.length} voucher heads.`);
+            });
+        });
+        
         document.querySelectorAll('.item-upload').forEach(input => {
             input.addEventListener('change', e => {
                 const category = e.target.dataset.category;
                 handleFileUpload(e.target.files[0], async (data) => {
                     const batch = db.batch();
                     let validItemsCount = 0;
-
                     data.forEach(item => {
                         const cleanedItem = {};
                         for (const key in item) {
                             cleanedItem[key.trim()] = item[key];
                         }
-                        
                         const itemCode = cleanedItem['Item Code'];
                         const itemName = cleanedItem['Item Name'];
-
                         if (itemCode && itemName && itemCode.trim() !== '' && itemName.trim() !== '') {
                             const docRef = db.collection('items').doc();
                             const newItem = {
@@ -2380,7 +2438,6 @@ document.getElementById('poDetailsBody').innerHTML = `
                             validItemsCount++;
                         }
                     });
-
                     await batch.commit();
                     alert(`Uploaded ${validItemsCount} items for ${category} to Firestore.`);
                 });
@@ -2393,6 +2450,23 @@ document.getElementById('poDetailsBody').innerHTML = `
         const debouncedVendorSearch = debounce((event) => renderVendorSearchResults(event.target.value));
         document.getElementById('vendorSearch').addEventListener('keyup', debouncedVendorSearch);
         document.getElementById('otherVendorSearch').addEventListener('keyup', debouncedVendorSearch);
+
+        const debouncedVoucherHeadSearch = debounce((event) => {
+            const query = event.target.value.toLowerCase();
+            const resultsContainer = document.getElementById('voucherHeaderResults');
+            const storedHeads = localStorage.getItem('voucherHeads');
+            const heads = storedHeads ? JSON.parse(storedHeads) : [];
+
+            if (!query || heads.length === 0) {
+                resultsContainer.innerHTML = '';
+                return;
+            }
+            const filteredHeads = heads.filter(h => h.toLowerCase().includes(query)).slice(0, 10);
+            resultsContainer.innerHTML = filteredHeads.map(head => 
+                `<div class="vendor-search-item" data-head="${head}">${head}</div>`
+            ).join('');
+        }, 200);
+        document.getElementById('voucherHeader').addEventListener('keyup', debouncedVoucherHeadSearch);
         
         document.getElementById('savePoBtn').addEventListener('click', async () => {
             const { vendor, items, total } = AppState.newPO;
@@ -2411,14 +2485,9 @@ document.getElementById('poDetailsBody').innerHTML = `
                     let newPoNumber;
                     await db.runTransaction(async (transaction) => {
                         const counterDoc = await transaction.get(counterRef);
-                        if (!counterDoc.exists) {
-                            transaction.set(counterRef, { count: 1 });
-                            newPoNumber = 'PO-0001';
-                        } else {
-                            const newCount = counterDoc.data().count + 1;
-                            transaction.update(counterRef, { count: newCount });
-                            newPoNumber = `PO-${newCount.toString().padStart(4, '0')}`;
-                        }
+                        const newCount = (counterDoc.exists ? counterDoc.data().count : 0) + 1;
+                        transaction.set(counterRef, { count: newCount }, { merge: true });
+                        newPoNumber = `PO-${newCount.toString().padStart(4, '0')}`;
                     });
                     const newPO = { poNumber: newPoNumber, category: AppState.currentCategory, timestamp: firebase.firestore.FieldValue.serverTimestamp(), date: toLocalDateString(new Date()), vendor, items, total };
                     await db.collection('purchaseOrders').add(newPO);
