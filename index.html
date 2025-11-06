@@ -21,6 +21,7 @@
 
     <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
     
     <!-- Barcode Scanner Library -->
@@ -138,7 +139,7 @@
             min-height: 0;
         }
         
-        #loginPage {
+        #loginPage, #firebaseLoginPage {
             justify-content: center;
             align-items: center;
         }
@@ -147,9 +148,12 @@
             height: 100%;
             display: flex;
             flex-direction: column;
-            justify-content: flex-start;
+            justify-content: center;
             padding: 20px;
-            padding-top: 5vh;
+        }
+        #loginPage .login-container {
+             justify-content: flex-start;
+             padding-top: 5vh;
         }
         .login-header {
             text-align: center;
@@ -234,6 +238,13 @@
         }
         .other-purchase-tile-container .tile span {
             font-size: 16px;
+        }
+
+        .main-page-logout {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            z-index: 20;
         }
 
         .progress-container {
@@ -808,7 +819,28 @@
 </head>
 <body>
 
-    <div id="locationBlocker" style="position:fixed; top:0; left:0; width:100%; height:100%; background-color:var(--background-color); z-index:9999; display:flex; justify-content:center; align-items:center;">
+    <div id="firebaseLoginPage" class="page active">
+        <div class="login-container">
+            <div class="login-header">
+                <h1>METRO FRESH</h1>
+                <p>PO SYSTEM LOGIN</p>
+            </div>
+            <div style="max-width: 400px; margin: 0 auto; width: 100%;">
+                <div class="form-group">
+                    <label for="emailInput">Email</label>
+                    <input type="email" id="emailInput" class="form-control" placeholder="Enter your email">
+                </div>
+                <div class="form-group">
+                    <label for="loginPasswordInput">Password</label>
+                    <input type="password" id="loginPasswordInput" class="form-control" placeholder="Enter your password">
+                </div>
+                <p id="firebaseLoginError" style="color: var(--danger-color); display: none; text-align: center; margin-bottom: 15px;"></p>
+                <button class="btn btn-primary" id="firebaseLoginBtn" style="width:100%;">Login</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="locationBlocker" style="position:fixed; top:0; left:0; width:100%; height:100%; background-color:var(--background-color); z-index:9999; display:none; justify-content:center; align-items:center;">
         <div class="empty-state">
             <i class="material-icons">location_off</i>
             <p>Access Denied</p>
@@ -817,7 +849,8 @@
     </div>
 
     <div id="appContainer" style="display: none;">
-        <div id="loginPage" class="page active">
+        <div id="loginPage" class="page">
+            <button class="icon-button main-page-logout logout-btn" title="Logout"><i class="material-icons">logout</i></button>
             <div class="login-container">
                 <div class="login-header">
                     <h1>METRO FRESH</h1>
@@ -915,6 +948,7 @@
                 <div class="header-side right">
                     <button class="icon-button calendar-btn"><i class="material-icons">calendar_today</i></button>
                     <button class="icon-button" id="settingsBtn"><i class="material-icons">settings</i></button>
+                    <button class="icon-button logout-btn" title="Logout"><i class="material-icons">logout</i></button>
                 </div>
             </div>
             <div class="content" id="adminContent"></div>
@@ -1164,6 +1198,7 @@
 
     document.addEventListener('DOMContentLoaded', () => {
         
+        const auth = firebase.auth();
         let html5QrCode = null;
         const ADMIN_PASSWORD = "Adm456";
     
@@ -1182,7 +1217,33 @@
         
         const SUPERMARKET_LAT = 11.989993133727276; 
         const SUPERMARKET_LON = 75.67562654875947;
-        const ALLOWED_RADIUS_METERS = 3000;
+        const ALLOWED_RADIUS_METERS = 300;
+
+        auth.onAuthStateChanged(async (user) => {
+            const firebaseLoginPage = document.getElementById('firebaseLoginPage');
+            const appContainer = document.getElementById('appContainer');
+
+            if (user) {
+                const idTokenResult = await user.getIdTokenResult(true);
+                const userRole = idTokenResult.claims.role;
+
+                firebaseLoginPage.classList.remove('active');
+                allPages.forEach(p => p.id !== 'firebaseLoginPage' && p.classList.remove('active'));
+
+                if (userRole === 'admin') {
+                    document.getElementById('locationBlocker').style.display = 'none';
+                    appContainer.style.display = 'block';
+                    navigateTo('loginPage', {}, true);
+                } else {
+                    checkLocationAndInitializeApp();
+                }
+            } else {
+                appContainer.style.display = 'none';
+                document.getElementById('locationBlocker').style.display = 'none';
+                allPages.forEach(p => p.classList.remove('active'));
+                firebaseLoginPage.classList.add('active');
+            }
+        });
 
         function getDistance(lat1, lon1, lat2, lon2) {
             const R = 6371e3;
@@ -1198,25 +1259,33 @@
         function checkLocationAndInitializeApp() {
             const blocker = document.getElementById('locationBlocker');
             const appContainer = document.getElementById('appContainer');
+            
             if (!navigator.geolocation) {
                 blocker.querySelector('p').textContent = "Geolocation is not supported by your browser.";
+                blocker.style.display = 'flex';
                 return;
             }
+            
             navigator.geolocation.getCurrentPosition(
                 (position) => {
                     const userLat = position.coords.latitude;
                     const userLon = position.coords.longitude;
                     const distance = getDistance(SUPERMARKET_LAT, SUPERMARKET_LON, userLat, userLon);
+                    
                     if (distance <= ALLOWED_RADIUS_METERS) {
                         blocker.style.display = 'none';
                         appContainer.style.display = 'block';
+                        navigateTo('loginPage', {}, true);
                     } else {
-                         blocker.style.display = 'flex';
+                        blocker.querySelector('p:last-child').textContent = "This app can only be used within the supermarket premises.";
+                        blocker.style.display = 'flex';
+                        appContainer.style.display = 'none';
                     }
                 },
                 () => {
-                    blocker.querySelector('p').textContent = "Location access was denied. Please enable location services to use the app.";
-                     blocker.style.display = 'flex';
+                    blocker.querySelector('p:last-child').textContent = "Location access was denied. Please enable location services to use the app.";
+                    blocker.style.display = 'flex';
+                    appContainer.style.display = 'none';
                 }
             );
         }
@@ -1239,7 +1308,11 @@
             if (targetPage) {
                 targetPage.classList.add('active');
                 if (addToHistory && AppState.history[AppState.history.length - 1] !== pageId) {
-                    AppState.history.push(pageId);
+                    if (pageId === 'loginPage' && AppState.history.length > 0) {
+                        AppState.history = ['loginPage'];
+                    } else {
+                         AppState.history.push(pageId);
+                    }
                 }
                 if (pageId === 'categoryPage') await renderCategoryPage(context.category);
                 if (pageId === 'adminPage') await renderAdminPage();
@@ -1762,6 +1835,7 @@
         
         function renderBrandFilters() {
             const container = document.getElementById('brandFilterContainer');
+            if(!container) return;
             const brands = [...new Set(AppState.itemCache.map(item => item.BRAND || 'Unbranded'))].sort();
             container.innerHTML = `<div class="brand-pill active" data-brand="All">All</div>` + 
                 brands.map(brand => `<div class="brand-pill" data-brand="${brand}">${brand}</div>`).join('');
@@ -1769,6 +1843,7 @@
 
         function renderProductSearchResults(query) {
             const container = document.getElementById('productSearchResultsGrid');
+            if(!container) return;
             let items = AppState.itemCache;
             if (AppState.selectedBrand !== 'All') {
                 items = items.filter(item => (item.BRAND || 'Unbranded') === AppState.selectedBrand);
@@ -1808,6 +1883,7 @@
         
         function updateCartBadge() {
             const badge = document.getElementById('cart-badge');
+            if(!badge) return;
             const totalItems = AppState.newPO.items.length;
             badge.textContent = totalItems;
             badge.style.display = totalItems > 0 ? 'flex' : 'none';
@@ -1815,6 +1891,7 @@
 
         function renderCartModal() {
             const container = document.getElementById('cartItemsContainer');
+            if(!container) return;
             container.innerHTML = AppState.newPO.items.length === 0
                 ? `<div class="empty-state"><i class="material-icons">remove_shopping_cart</i><p>Your cart is empty</p></div>`
                 : AppState.newPO.items.map((item, index) => `<div class="list-item" style="padding: 10px; margin-bottom: 5px; cursor: default;"><div style="flex-grow:1;"><div class="list-item-title" style="font-size:14px;">${item.itemName}</div><div style="display:flex; align-items:center; gap:10px; margin-top:5px;"><span>Qty:</span><input type="number" class="form-control po-item-qty" value="${item.qty}" data-index="${index}" style="width: 70px; padding: 5px;"></div></div><button class="icon-button po-item-remove" data-index="${index}"><i class="material-icons" style="color:var(--danger-color)">delete</i></button></div>`).join('');
@@ -1938,6 +2015,28 @@
         }
 
         document.body.addEventListener('click', async (e) => {
+            if (e.target.closest('#firebaseLoginBtn')) {
+                const email = document.getElementById('emailInput').value;
+                const password = document.getElementById('loginPasswordInput').value;
+                const errorEl = document.getElementById('firebaseLoginError');
+
+                auth.signInWithEmailAndPassword(email, password)
+                    .catch((error) => {
+                        if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
+                            errorEl.textContent = 'Invalid email or password.';
+                        } else {
+                            errorEl.textContent = 'An error occurred. Please try again.';
+                        }
+                        errorEl.style.display = 'block';
+                    });
+            }
+
+            if (e.target.closest('.logout-btn')) {
+                if (confirm('Are you sure you want to logout?')) {
+                    auth.signOut();
+                }
+            }
+            
             if (e.target.closest('#editOrderBtn')) {
                 const button = e.target.closest('#editOrderBtn');
                 const poId = button.dataset.poId;
@@ -2004,7 +2103,14 @@
             }
             if (e.target.closest('#addPoBtn')) await navigateTo('newOrderPage');
             if (e.target.closest('#addOtherPurchaseBtn')) await navigateTo('newOtherPurchaseOrderPage');
-            if (e.target.closest('#addVoucherBtn')) showModal('newVoucherModal');
+            if (e.target.closest('#addVoucherBtn')) {
+                // Reset modal for new entry
+                document.getElementById('newVoucherModal').querySelector('.modal-title').textContent = 'New Voucher';
+                document.getElementById('editingVoucherId').value = '';
+                document.getElementById('voucherHeader').value = '';
+                document.getElementById('voucherAmount').value = '';
+                showModal('newVoucherModal');
+            }
             if (e.target.closest('[data-close-modal]')) {
                 const modalId = e.target.closest('.modal').id;
                 if (modalId === 'scannerModal') { stopScanner(); } 
@@ -2538,7 +2644,6 @@
             });
         }
         
-        checkLocationAndInitializeApp();
     });
 </script>
 
