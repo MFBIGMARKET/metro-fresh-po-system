@@ -1217,7 +1217,7 @@
         
         const SUPERMARKET_LAT = 11.989993133727276; 
         const SUPERMARKET_LON = 75.67562654875947;
-        const ALLOWED_RADIUS_METERS = 300;
+        const ALLOWED_RADIUS_METERS = 3000;
 
         auth.onAuthStateChanged(async (user) => {
             const firebaseLoginPage = document.getElementById('firebaseLoginPage');
@@ -1688,47 +1688,48 @@
         }
         
         async function renderAdminVendorDetail(container, category, poId) {
-            const collectionName = category === 'OTHER PURCHASES' ? 'otherPurchases' : 'purchaseOrders';
-            
-            if (category === 'VOUCHER') {
-                const vendorOrHeader = poId;
-                const dateString = toLocalDateString(AppState.currentDate);
-                const snapshot = await db.collection('vouchers').where('date', '==', dateString).where('header', '==', vendorOrHeader).get();
-                const vouchers = snapshot.docs.map(doc => doc.data());
-                container.innerHTML = `<div class="drilldown-header">Vouchers for ${vendorOrHeader}</div>
-                    <div class="detail-table-wrapper"><table class="detail-table">
-                        <thead><tr><th>Date</th><th class="text-right">Amount</th></tr></thead>
-                        <tbody>${vouchers.map(v => `<tr><td>${formatDisplayDate(v.date)}</td><td class="text-right">₹${v.amount.toFixed(2)}</td></tr>`).join('')}</tbody>
-                    </table></div>`;
-                return;
-            }
+    const collectionName = category === 'OTHER PURCHASES' ? 'otherPurchases' : 'purchaseOrders';
+    
+    if (category === 'VOUCHER') {
+        const vendorOrHeader = poId;
+        const dateString = toLocalDateString(AppState.currentDate);
+        const snapshot = await db.collection('vouchers').where('date', '==', dateString).where('header', '==', vendorOrHeader).get();
+        const vouchers = snapshot.docs.map(doc => doc.data());
+        container.innerHTML = `<div class="drilldown-header">Vouchers for ${vendorOrHeader}</div>
+            <div class="detail-table-wrapper"><table class="detail-table">
+                <thead><tr><th>Date</th><th class="text-right">Amount</th></tr></thead>
+                <tbody>${vouchers.map(v => `<tr><td>${formatDisplayDate(v.date)}</td><td class="text-right">₹${v.amount.toFixed(2)}</td></tr>`).join('')}</tbody>
+            </table></div>`;
+        return;
+    }
 
-            const poDoc = await db.collection(collectionName).doc(poId).get();
-            if (!poDoc.exists) {
-                container.innerHTML = `<div class="empty-state"><p>Error: Purchase Order not found.</p></div>`;
-                return;
-            }
-            const po = poDoc.data();
-            const isApproved = await getApprovalStatus(poId);
-            const actionButtonHTML = isApproved
-                ? `<button class="btn btn-success" id="downloadPdfBtn" data-po-id="${poId}"><i class="material-icons" style="font-size: 18px; vertical-align: middle; margin-right: 5px;">picture_as_pdf</i>Download PDF</button>`
-                : `<button class="btn btn-primary" id="approveBtn" data-po-id="${poId}"><i class="material-icons" style="font-size: 18px; vertical-align: middle; margin-right: 5px;">check_circle</i>Approve Order</button>`;
-            
-            container.innerHTML = `
-                <div class="drilldown-header">
-                    <span>Details for ${po.poNumber} (${po.vendor})</span>
-                    <div class="drilldown-header-actions">
-                        ${actionButtonHTML}
-                        <button class="btn btn-primary" id="editOrderBtn" data-po-id="${poId}" data-category="${po.category}"><i class="material-icons" style="font-size: 18px; vertical-align: middle;">edit</i></button>
-                        <button class="btn btn-danger" id="deleteOrderBtn" data-po-id="${poId}"><i class="material-icons" style="font-size: 18px; vertical-align: middle;">delete</i></button>
-                    </div>
-                </div>
-                <div class="detail-table-wrapper"><table class="detail-table">
-                    <thead><tr><th>Product</th><th class="text-right">Cost</th><th class="text-center">Qty</th><th class="text-right">Total</th></tr></thead>
-                    <tbody>${po.items.map(item => `<tr><td>${item.itemName}</td><td class="text-right">₹${item.cost.toFixed(2)}</td><td class="text-center">${item.qty}</td><td class="text-right">₹${(item.qty * item.cost).toFixed(2)}</td></tr>`).join('')}</tbody>
-                    <tfoot><tr><td colspan="3">Grand Total</td><td class="text-right">₹${po.total.toFixed(2)}</td></tr></tfoot>
-                </table></div>`;
-        }
+    const poDoc = await db.collection(collectionName).doc(poId).get();
+    if (!poDoc.exists) {
+        container.innerHTML = `<div class="empty-state"><p>Error: Purchase Order not found.</p></div>`;
+        return;
+    }
+    const po = poDoc.data();
+    const isApproved = await getApprovalStatus(poId);
+    
+    const actionButtonHTML = isApproved
+        ? `<button class="btn btn-success" id="downloadPdfBtn" data-po-id="${poId}"><i class="material-icons" style="font-size: 18px; vertical-align: middle; margin-right: 5px;">picture_as_pdf</i>Download PDF</button>`
+        : `<button class="btn btn-primary" id="approveBtn" data-po-id="${poId}"><i class="material-icons" style="font-size: 18px; vertical-align: middle; margin-right: 5px;">check_circle</i>Approve Order</button>`;
+    
+    container.innerHTML = `
+        <div class="drilldown-header">
+            <span>Details for ${po.poNumber} (${po.vendor})</span>
+            <div class="drilldown-header-actions">
+                ${actionButtonHTML}
+                <button class="btn btn-primary" id="editOrderBtn" data-po-id="${poId}" data-category="${po.category}"><i class="material-icons" style="font-size: 18px; vertical-align: middle;">edit</i></button>
+                <button class="btn btn-danger" id="deleteOrderBtn" data-po-id="${poId}"><i class="material-icons" style="font-size: 18px; vertical-align: middle;">delete</i></button>
+            </div>
+        </div>
+        <div class="detail-table-wrapper"><table class="detail-table">
+            <thead><tr><th>Product</th><th class="text-right">Cost</th><th class="text-center">Qty</th><th class="text-right">Total</th></tr></thead>
+            <tbody>${po.items.map(item => `<tr><td>${item.itemName}</td><td class="text-right">₹${item.cost.toFixed(2)}</td><td class="text-center">${item.qty}</td><td class="text-right">₹${(item.qty * item.cost).toFixed(2)}</td></tr>`).join('')}</tbody>
+            <tfoot><tr><td colspan="3">Grand Total</td><td class="text-right">₹${po.total.toFixed(2)}</td></tr></tfoot>
+        </table></div>`;
+}
 
         document.getElementById('loginBtn').addEventListener('click', async () => {
             const passwordInput = document.getElementById('passwordInput');
@@ -1940,81 +1941,218 @@
         }
         
         async function generatePDF(poId) {
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF();
-            const pageWidth = doc.internal.pageSize.getWidth();
-            const pageHeight = doc.internal.pageSize.getHeight();
-            const margin = 14;
-            let poDoc = await db.collection('purchaseOrders').doc(poId).get();
-            if (!poDoc.exists) { 
-                poDoc = await db.collection('otherPurchases').doc(poId).get();
-            }
-            if (!poDoc.exists) { alert('Could not find order to generate PDF.'); return; }
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
+    const margin = 14;
 
-            const po = poDoc.data();
-            const tableData = po.items.map((item, index) => [ index + 1, item.itemName, item.qty ]);
-            const lemongrassGreen = '#8BC34A';
-            const textColor = '#212529';
-            const secondaryColor = '#6c757d';
-            const topY = 10;
-            const logoData = localStorage.getItem('appLogo');
-            if (logoData) {
-                try {
-                    const logoWidth = 40;
-                    const logoHeight = 20;
-                    const logoX = pageWidth - logoWidth - margin; 
-                    doc.addImage(logoData, 'PNG', logoX, topY, logoWidth, logoHeight);
-                } catch (e) { console.error("Error adding logo to PDF:", e); }
-            }
-            doc.setFontSize(22);
-            doc.setFont("helvetica", "bold");
-            doc.setTextColor(textColor);
-            doc.text("Purchase Order", margin, topY + 12);
-            const middleY = topY + 25;
-            const rightAlignX = pageWidth - margin;
-            doc.setFontSize(11);
-            doc.setFont("helvetica", "normal");
-            doc.setTextColor(secondaryColor);
-            doc.text("From:", margin, middleY);
-            doc.setFont("helvetica", "bold");
-            doc.setTextColor(textColor);
-            doc.text("Metro Fresh", margin + 12, middleY);
-            doc.setFont("helvetica", "normal");
-            doc.setTextColor(secondaryColor);
-            doc.text("Bill To:", margin, middleY + 7);
-            doc.setFont("helvetica", "bold");
-            doc.setTextColor(textColor);
-            doc.text(po.vendor, margin + 15, middleY + 7);
-            doc.setFontSize(10);
-            doc.setFont("helvetica", "bold");
-            doc.setTextColor(secondaryColor);
-            doc.text("PO Number:", rightAlignX - 40, middleY, { align: 'left' });
-            doc.text("PO Date:", rightAlignX - 40, middleY + 7, { align: 'left' });
-            doc.setFont("helvetica", "normal");
-            doc.setTextColor(textColor);
-            doc.text(po.poNumber, rightAlignX, middleY, { align: 'right' });
-            doc.text(formatDisplayDate(po.date), rightAlignX, middleY + 7, { align: 'right' });
-            const lineY = middleY + 15;
-            doc.setDrawColor(222, 226, 230);
-            doc.setLineWidth(0.5);
-            doc.line(margin, lineY, pageWidth - margin, lineY);
-            doc.autoTable({
-                head: [['S.No.', 'Item Name', 'Quantity']], body: tableData, startY: lineY + 5,
-                theme: 'grid',
-                headStyles: { fillColor: lemongrassGreen, textColor: [255, 255, 255], fontSize: 10, halign: 'center' },
-                styles: { fontSize: 9, cellPadding: 1.5 },
-                columnStyles: { 0: { halign: 'center', cellWidth: 20 }, 1: { halign: 'left' }, 2: { halign: 'center', cellWidth: 30 }},
-                didDrawPage: (data) => {
-                    const footerText = "Thank you for your business!";
-                    doc.setFontSize(10);
-                    doc.setTextColor(secondaryColor);
-                    doc.text(footerText, margin, pageHeight - 10);
-                }
-            });
-            doc.save(`PO_${po.vendor}_${po.date}.pdf`);
+    let poDoc = await db.collection('purchaseOrders').doc(poId).get();
+    if (!poDoc.exists) { 
+        poDoc = await db.collection('otherPurchases').doc(poId).get();
+    }
+    if (!poDoc.exists) { 
+        alert('Could not find order to generate PDF.'); 
+        return; 
+    }
+
+    const po = poDoc.data();
+
+    // --- START: ON-THE-FLY MRP FETCH LOGIC ---
+    const mrpMap = new Map();
+    // Only fetch MRPs if it's a standard PO with item codes
+    if (po.category !== 'OTHER PURCHASES' && po.items.length > 0) {
+        const itemCodes = po.items.map(item => item.itemCode);
+
+        // Chunk queries to handle more than 10 items
+        const CHUNK_SIZE = 10;
+        const queryChunks = [];
+        for (let i = 0; i < itemCodes.length; i += CHUNK_SIZE) {
+            const chunk = itemCodes.slice(i, i + CHUNK_SIZE);
+            const queryPromise = db.collection('items').where('Item Code', 'in', chunk).get();
+            queryChunks.push(queryPromise);
         }
 
+        // Execute all queries and build the MRP map
+        const allSnapshots = await Promise.all(queryChunks);
+        allSnapshots.forEach(snapshot => {
+            snapshot.forEach(doc => {
+                const itemData = doc.data();
+                if (itemData && itemData['Item Code']) {
+                    mrpMap.set(itemData['Item Code'], itemData.MRP);
+                }
+            });
+        });
+    }
+    // --- END: ON-THE-FLY MRP FETCH LOGIC ---
+
+    const tableData = po.items.map((item, index) => {
+        // Look up the fresh MRP. For old POs, this finds the value. For new POs, it confirms it.
+        // For "Other Purchases", it will default to 0.
+        const freshMrp = mrpMap.get(item.itemCode) || item.mrp || 0; 
+        
+        return [ 
+            index + 1, 
+            item.itemName, 
+            parseFloat(freshMrp).toFixed(1), 
+            item.qty 
+        ];
+    });
+
+    const lemongrassGreen = '#8BC34A';
+    const textColor = '#212529';
+    const secondaryColor = '#6c757d';
+    const topY = 10;
+    const logoData = localStorage.getItem('appLogo');
+    
+    if (logoData) {
+        try {
+            const logoWidth = 40;
+            const logoHeight = 20;
+            const logoX = pageWidth - logoWidth - margin; 
+            doc.addImage(logoData, 'PNG', logoX, topY, logoWidth, logoHeight);
+        } catch (e) { console.error("Error adding logo to PDF:", e); }
+    }
+
+    doc.setFontSize(22);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(textColor);
+    doc.text("Purchase Order", margin, topY + 12);
+    
+    const middleY = topY + 25;
+    const rightAlignX = pageWidth - margin;
+    doc.setFontSize(11);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(secondaryColor);
+    doc.text("From:", margin, middleY);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(textColor);
+    doc.text("Metro Fresh", margin + 12, middleY);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(secondaryColor);
+    doc.text("Bill To:", margin, middleY + 7);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(textColor);
+    doc.text(po.vendor, margin + 15, middleY + 7);
+    
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(secondaryColor);
+    doc.text("PO Number:", rightAlignX - 40, middleY, { align: 'left' });
+    doc.text("PO Date:", rightAlignX - 40, middleY + 7, { align: 'left' });
+    
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(textColor);
+    doc.text(po.poNumber, rightAlignX, middleY, { align: 'right' });
+    doc.text(formatDisplayDate(po.date), rightAlignX, middleY + 7, { align: 'right' });
+    
+    const lineY = middleY + 15;
+    doc.setDrawColor(222, 226, 230);
+    doc.setLineWidth(0.5);
+    doc.line(margin, lineY, pageWidth - margin, lineY);
+    
+    doc.autoTable({
+        head: [['S.No.', 'Item Name', 'MRP', 'Quantity']], 
+        body: tableData, 
+        startY: lineY + 5,
+        theme: 'grid',
+        headStyles: { fillColor: lemongrassGreen, textColor: [255, 255, 255], fontSize: 10, halign: 'center' },
+        styles: { fontSize: 9, cellPadding: 1.5 },
+        columnStyles: { 
+            0: { halign: 'center', cellWidth: 15 }, 
+            1: { halign: 'left' }, 
+            2: { halign: 'right', cellWidth: 25 }, 
+            3: { halign: 'center', cellWidth: 25 }
+        },
+        didDrawPage: (data) => {
+            const footerText = "Thank you for your business!";
+            doc.setFontSize(10);
+            doc.setTextColor(secondaryColor);
+            doc.text(footerText, margin, pageHeight - 10);
+        }
+    });
+
+    doc.save(`PO_${po.vendor}_${po.date}.pdf`);
+}
         document.body.addEventListener('click', async (e) => {
+                // REPLACE the old '#refreshMrpBtn' block with this one
+if (e.target.closest('#refreshMrpBtn')) {
+    const button = e.target.closest('#refreshMrpBtn');
+    const poId = button.dataset.poId;
+    const category = button.dataset.category;
+
+    if (!poId || category === 'OTHER PURCHASES') {
+        alert("This function is not applicable for 'Other Purchases'.");
+        return;
+    }
+
+    if (!confirm('This will update the MRP for all items in this PO with the latest master data. Do you want to continue?')) {
+        return;
+    }
+
+    alert('Refreshing MRP data... please wait.');
+
+    try {
+        // 1. Get the existing PO document
+        const poRef = db.collection('purchaseOrders').doc(poId);
+        const poDoc = await poRef.get();
+        if (!poDoc.exists) {
+            throw new Error("PO not found!");
+        }
+        
+        const poData = poDoc.data();
+        const itemCodes = poData.items.map(item => item.itemCode);
+
+        // --- START OF THE FIX ---
+
+        // 2. "Chunk" the item codes into arrays of 10 or less
+        const CHUNK_SIZE = 10;
+        const queryChunks = [];
+        for (let i = 0; i < itemCodes.length; i += CHUNK_SIZE) {
+            const chunk = itemCodes.slice(i, i + CHUNK_SIZE);
+            const queryPromise = db.collection('items').where('Item Code', 'in', chunk).get();
+            queryChunks.push(queryPromise);
+        }
+
+        // 3. Execute all queries in parallel and wait for all of them to complete
+        const allSnapshots = await Promise.all(queryChunks);
+
+        // 4. Combine the results from all snapshots into a single map
+        const mrpMap = new Map();
+        allSnapshots.forEach(snapshot => {
+            snapshot.forEach(doc => {
+                const itemData = doc.data();
+                if (itemData && itemData['Item Code']) {
+                    mrpMap.set(itemData['Item Code'], itemData.MRP);
+                }
+            });
+        });
+
+        // --- END OF THE FIX ---
+
+        // 5. Create a new items array with updated MRPs
+        const updatedItems = poData.items.map(item => {
+            const latestMrp = mrpMap.get(item.itemCode);
+            return {
+                ...item,
+                mrp: latestMrp !== undefined ? latestMrp : item.mrp || 0
+            };
+        });
+
+        // 6. Update the PO document in Firestore
+        await poRef.update({ items: updatedItems });
+
+        alert('MRP data refreshed successfully!');
+        
+        // 7. Re-render the view to show the user the updated data immediately
+        await renderAdminVendorDetail(document.getElementById('adminContent'), category, poId);
+
+    } catch (error) {
+        console.error("Error refreshing MRP data:", error);
+        alert("An error occurred while refreshing MRPs.");
+    }
+}
+
             if (e.target.closest('#firebaseLoginBtn')) {
                 const email = document.getElementById('emailInput').value;
                 const password = document.getElementById('loginPasswordInput').value;
@@ -2439,34 +2577,48 @@
         });
         
         document.getElementById('productSearchResultsGrid').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const form = e.target;
-            if (!form.classList.contains('product-card-actions')) return;
-            const itemName = form.dataset.itemName;
-            const itemCode = form.dataset.itemCode;
-            const finalCost = parseFloat(form.dataset.defaultCost);
-            const qtyInput = form.querySelector('.qty-input');
-            const qty = parseInt(qtyInput.value) || 1;
-            const existingItem = AppState.newPO.items.find(i => i.itemCode === itemCode);
-            if (existingItem) {
-                existingItem.qty += qty;
-            } else {
-                AppState.newPO.items.push({ itemCode: itemCode, itemName: itemName, cost: finalCost, qty: qty });
-            }
-            updateCartBadge();
-            if (!AppState.editingPoId) await updateDraftPO();
-            qtyInput.value = '1';
-            const addButton = form.querySelector('.add-item-btn');
-            addButton.textContent = 'Added!';
-            addButton.classList.remove('btn-primary');
-            addButton.classList.add('btn-success');
-            setTimeout(() => {
-                addButton.textContent = 'Add';
-                addButton.classList.remove('btn-success');
-                addButton.classList.add('btn-primary');
-            }, 1000);
-        });
+    e.preventDefault();
+    const form = e.target;
+    if (!form.classList.contains('product-card-actions')) return;
 
+    const itemName = form.dataset.itemName;
+    const itemCode = form.dataset.itemCode;
+    const finalCost = parseFloat(form.dataset.defaultCost);
+    const qtyInput = form.querySelector('.qty-input');
+    const qty = parseInt(qtyInput.value) || 1;
+
+    const existingItem = AppState.newPO.items.find(i => i.itemCode === itemCode);
+    if (existingItem) {
+        existingItem.qty += qty;
+    } else {
+        // Find the full item object from our cache to get its MRP
+        const fullItem = AppState.itemCache.find(i => i['Item Code'] === itemCode);
+        const itemMrp = fullItem ? fullItem.MRP : 0; // Get MRP, default to 0 if not found
+
+        // Add the 'mrp' property to the object we save
+        AppState.newPO.items.push({ 
+            itemCode: itemCode, 
+            itemName: itemName, 
+            cost: finalCost, 
+            qty: qty, 
+            mrp: itemMrp 
+        });
+    }
+
+    updateCartBadge();
+    if (!AppState.editingPoId) await updateDraftPO();
+    
+    qtyInput.value = '1';
+    const addButton = form.querySelector('.add-item-btn');
+    addButton.textContent = 'Added!';
+    addButton.classList.remove('btn-primary');
+    addButton.classList.add('btn-success');
+    setTimeout(() => {
+        addButton.textContent = 'Add';
+        addButton.classList.remove('btn-success');
+        addButton.classList.add('btn-primary');
+    }, 1000);
+});
         document.getElementById('addOtherItemForm').addEventListener('submit', (e) => {
             e.preventDefault();
             const itemNameInput = document.getElementById('otherItemName');
