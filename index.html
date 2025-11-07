@@ -729,6 +729,30 @@
             color: var(--secondary-color);
         }
 
+        .item-filter-container {
+            display: flex;
+            border: 1px solid #ced4da;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .item-filter-btn {
+            flex-grow: 1;
+            border: none;
+            border-radius: 0;
+            background-color: var(--card-bg);
+            color: var(--secondary-color);
+            padding: 10px;
+            font-size: 14px;
+        }
+        .item-filter-btn:not(:last-child) {
+            border-right: 1px solid #ced4da;
+        }
+        .item-filter-btn.active {
+            background-color: var(--primary-color);
+            color: white;
+            font-weight: 600;
+        }
+
         #adminContent .tile-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
@@ -738,6 +762,30 @@
         #adminContent .admin-total-tile {
             grid-column: 1 / 3;
             aspect-ratio: auto;
+        }
+
+        .settings-upload-section {
+            border: 1px solid #eee;
+            border-radius: var(--border-radius);
+            padding: 16px;
+            margin-bottom: 20px;
+            background-color: #f8f9fa;
+        }
+        .settings-upload-section h4 {
+            margin-bottom: 15px;
+            font-size: 16px;
+            color: var(--dark-color);
+            text-align: center;
+            border-bottom: 1px solid #dee2e6;
+            padding-bottom: 10px;
+        }
+        .settings-upload-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px 16px;
+        }
+        .settings-upload-grid .form-group {
+            margin-bottom: 0;
         }
 
         @media (min-width: 768px) {
@@ -915,6 +963,14 @@
                     <label for="vendorSearch">Search for Vendor</label>
                     <input type="text" id="vendorSearch" class="form-control" placeholder="Type to search vendors...">
                     <div id="vendorSearchResults" class="search-results-list"></div>
+                </div>
+
+                <div class="form-group">
+                    <label>Item List Filter</label>
+                    <div class="item-filter-container">
+                        <button class="btn item-filter-btn" data-filter="fastMoving">Fast Moving</button>
+                        <button class="btn item-filter-btn active" data-filter="master">Master List</button>
+                    </div>
                 </div>
                 
                 <div class="form-group" id="brandFilterWrapper">
@@ -1095,13 +1151,10 @@
                     </div>
                 </div>
                 <hr style="margin: 20px 0;">
-                <p style="font-weight: 500; margin-bottom: 10px;">Upload Item Lists (.csv)</p>
-                <div class="form-group"><label>FOOD</label><input type="file" class="form-control item-upload" data-category="FOOD" accept=".csv"></div>
-                <div class="form-group"><label>NONFOOD</label><input type="file" class="form-control item-upload" data-category="NONFOOD" accept=".csv"></div>
-                <div class="form-group"><label>REPACK</label><input type="file" class="form-control item-upload" data-category="REPACK" accept=".csv"></div>
-                <div class="form-group"><label>BAKESTORY</label><input type="file" class="form-control item-upload" data-category="BAKESTORY" accept=".csv"></div>
-                <div class="form-group"><label>F&V</label><input type="file" class="form-control item-upload" data-category="F&V" accept=".csv"></div>
-                <div class="form-group"><label>PROMOTER ITEMS</label><input type="file" class="form-control item-upload" data-category="PROMOTER ITEMS" accept=".csv"></div>
+                
+                <!-- NEW UPLOAD SECTIONS PER CATEGORY -->
+                <div id="categoryUploadSections"></div>
+
             </div>
         </div>
     </div>
@@ -1205,6 +1258,7 @@
         const AppState = {
             history: ['loginPage'],
             currentCategory: null,
+            currentFilterMode: {}, // Object to hold filter mode per category
             currentDate: new Date(),
             adminDrilldown: [],
             newPO: { vendor: null, items: [], total: 0 },
@@ -1217,7 +1271,7 @@
         
         const SUPERMARKET_LAT = 11.989993133727276; 
         const SUPERMARKET_LON = 75.67562654875947;
-        const ALLOWED_RADIUS_METERS = 300;
+        const ALLOWED_RADIUS_METERS = 3000;
 
         auth.onAuthStateChanged(async (user) => {
             const firebaseLoginPage = document.getElementById('firebaseLoginPage');
@@ -1344,7 +1398,12 @@
             }
         }
         
-        const showModal = (modalId) => document.getElementById(modalId)?.classList.add('active');
+        const showModal = (modalId) => {
+             if(modalId === 'settingsModal') {
+                renderCategoryUploadSections();
+            }
+            document.getElementById(modalId)?.classList.add('active');
+        }
         const hideModal = (modalId) => document.getElementById(modalId)?.classList.remove('active');
 
         async function startScanner() {
@@ -1688,48 +1747,53 @@
         }
         
         async function renderAdminVendorDetail(container, category, poId) {
-    const collectionName = category === 'OTHER PURCHASES' ? 'otherPurchases' : 'purchaseOrders';
-    
-    if (category === 'VOUCHER') {
-        const vendorOrHeader = poId;
-        const dateString = toLocalDateString(AppState.currentDate);
-        const snapshot = await db.collection('vouchers').where('date', '==', dateString).where('header', '==', vendorOrHeader).get();
-        const vouchers = snapshot.docs.map(doc => doc.data());
-        container.innerHTML = `<div class="drilldown-header">Vouchers for ${vendorOrHeader}</div>
-            <div class="detail-table-wrapper"><table class="detail-table">
-                <thead><tr><th>Date</th><th class="text-right">Amount</th></tr></thead>
-                <tbody>${vouchers.map(v => `<tr><td>${formatDisplayDate(v.date)}</td><td class="text-right">₹${v.amount.toFixed(2)}</td></tr>`).join('')}</tbody>
-            </table></div>`;
-        return;
-    }
+            const collectionName = category === 'OTHER PURCHASES' ? 'otherPurchases' : 'purchaseOrders';
+            
+            if (category === 'VOUCHER') {
+                const vendorOrHeader = poId;
+                const dateString = toLocalDateString(AppState.currentDate);
+                const snapshot = await db.collection('vouchers').where('date', '==', dateString).where('header', '==', vendorOrHeader).get();
+                const vouchers = snapshot.docs.map(doc => doc.data());
+                container.innerHTML = `<div class="drilldown-header">Vouchers for ${vendorOrHeader}</div>
+                    <div class="detail-table-wrapper"><table class="detail-table">
+                        <thead><tr><th>Date</th><th class="text-right">Amount</th></tr></thead>
+                        <tbody>${vouchers.map(v => `<tr><td>${formatDisplayDate(v.date)}</td><td class="text-right">₹${v.amount.toFixed(2)}</td></tr>`).join('')}</tbody>
+                    </table></div>`;
+                return;
+            }
 
-    const poDoc = await db.collection(collectionName).doc(poId).get();
-    if (!poDoc.exists) {
-        container.innerHTML = `<div class="empty-state"><p>Error: Purchase Order not found.</p></div>`;
-        return;
-    }
-    const po = poDoc.data();
-    const isApproved = await getApprovalStatus(poId);
-    
-    const actionButtonHTML = isApproved
-        ? `<button class="btn btn-success" id="downloadPdfBtn" data-po-id="${poId}"><i class="material-icons" style="font-size: 18px; vertical-align: middle; margin-right: 5px;">picture_as_pdf</i>Download PDF</button>`
-        : `<button class="btn btn-primary" id="approveBtn" data-po-id="${poId}"><i class="material-icons" style="font-size: 18px; vertical-align: middle; margin-right: 5px;">check_circle</i>Approve Order</button>`;
-    
-    container.innerHTML = `
-        <div class="drilldown-header">
-            <span>Details for ${po.poNumber} (${po.vendor})</span>
-            <div class="drilldown-header-actions">
-                ${actionButtonHTML}
-                <button class="btn btn-primary" id="editOrderBtn" data-po-id="${poId}" data-category="${po.category}"><i class="material-icons" style="font-size: 18px; vertical-align: middle;">edit</i></button>
-                <button class="btn btn-danger" id="deleteOrderBtn" data-po-id="${poId}"><i class="material-icons" style="font-size: 18px; vertical-align: middle;">delete</i></button>
-            </div>
-        </div>
-        <div class="detail-table-wrapper"><table class="detail-table">
-            <thead><tr><th>Product</th><th class="text-right">Cost</th><th class="text-center">Qty</th><th class="text-right">Total</th></tr></thead>
-            <tbody>${po.items.map(item => `<tr><td>${item.itemName}</td><td class="text-right">₹${item.cost.toFixed(2)}</td><td class="text-center">${item.qty}</td><td class="text-right">₹${(item.qty * item.cost).toFixed(2)}</td></tr>`).join('')}</tbody>
-            <tfoot><tr><td colspan="3">Grand Total</td><td class="text-right">₹${po.total.toFixed(2)}</td></tr></tfoot>
-        </table></div>`;
-}
+            const poDoc = await db.collection(collectionName).doc(poId).get();
+            if (!poDoc.exists) {
+                container.innerHTML = `<div class="empty-state"><p>Error: Purchase Order not found.</p></div>`;
+                return;
+            }
+            const po = poDoc.data();
+            const isApproved = await getApprovalStatus(poId);
+            
+            const actionButtonHTML = isApproved
+                ? `<button class="btn btn-success" id="downloadPdfBtn" data-po-id="${poId}"><i class="material-icons" style="font-size: 18px; vertical-align: middle; margin-right: 5px;">picture_as_pdf</i>Download PDF</button>`
+                : `<button class="btn btn-primary" id="approveBtn" data-po-id="${poId}"><i class="material-icons" style="font-size: 18px; vertical-align: middle; margin-right: 5px;">check_circle</i>Approve Order</button>`;
+            
+            const refreshButtonHTML = (category !== 'OTHER PURCHASES' && !isApproved) 
+                ? `<button class="btn btn-primary" id="refreshMrpBtn" data-po-id="${poId}" data-category="${po.category}" title="Refresh MRP Data"><i class="material-icons" style="font-size: 18px; vertical-align: middle;">sync</i></button>` 
+                : '';
+
+            container.innerHTML = `
+                <div class="drilldown-header">
+                    <span>Details for ${po.poNumber} (${po.vendor})</span>
+                    <div class="drilldown-header-actions">
+                        ${actionButtonHTML}
+                        ${refreshButtonHTML}
+                        <button class="btn btn-primary" id="editOrderBtn" data-po-id="${poId}" data-category="${po.category}"><i class="material-icons" style="font-size: 18px; vertical-align: middle;">edit</i></button>
+                        <button class="btn btn-danger" id="deleteOrderBtn" data-po-id="${poId}"><i class="material-icons" style="font-size: 18px; vertical-align: middle;">delete</i></button>
+                    </div>
+                </div>
+                <div class="detail-table-wrapper"><table class="detail-table">
+                    <thead><tr><th>Product</th><th class="text-right">Cost</th><th class="text-center">Qty</th><th class="text-right">Total</th></tr></thead>
+                    <tbody>${po.items.map(item => `<tr><td>${item.itemName}</td><td class="text-right">₹${item.cost.toFixed(2)}</td><td class="text-center">${item.qty}</td><td class="text-right">₹${(item.qty * item.cost).toFixed(2)}</td></tr>`).join('')}</tbody>
+                    <tfoot><tr><td colspan="3">Grand Total</td><td class="text-right">₹${po.total.toFixed(2)}</td></tr></tfoot>
+                </table></div>`;
+        }
 
         document.getElementById('loginBtn').addEventListener('click', async () => {
             const passwordInput = document.getElementById('passwordInput');
@@ -1752,6 +1816,12 @@
             if (!category) return;
             AppState.currentCategory = category;
             document.getElementById('categoryTitle').textContent = `${category}`;
+            
+            // Set the initial filter mode for this category if it's not already set
+            if (!AppState.currentFilterMode[category]) {
+                AppState.currentFilterMode[category] = 'master';
+            }
+            
             await renderPOList();
         }
         
@@ -1790,8 +1860,8 @@
             const percentage = Math.min((total / max) * 100, 100);
             const bar = document.getElementById(type === 'voucher' ? 'voucherProgressBar' : 'poProgressBar');
             const text = document.getElementById(type === 'voucher' ? 'voucherProgressText' : 'poProgressText');
-            bar.style.width = `${percentage}%`;
-            text.textContent = `₹${total.toFixed(0)} / ₹${max.toLocaleString()}`;
+            if(bar) bar.style.width = `${percentage}%`;
+            if(text) text.textContent = `₹${total.toFixed(0)} / ₹${max.toLocaleString()}`;
         }
 
         async function renderNewOrderPage(context = {}) {
@@ -1801,9 +1871,14 @@
             const vendorSearch = document.getElementById('vendorSearch');
             AppState.editingPoId = editingPoId;
 
+            // Update filter button state
+            const currentMode = AppState.currentFilterMode[AppState.currentCategory] || 'master';
+            document.querySelectorAll('.item-filter-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.filter === currentMode);
+            });
+
             document.getElementById('productSearch').value = '';
             document.getElementById('vendorSearchResults').innerHTML = '';
-            document.getElementById('productSearchResultsGrid').innerHTML = `<div class="empty-state"><i class="material-icons">search</i><p>Start typing to find products</p></div>`;
             
             if (editingPoId) {
                 pageTitle.textContent = "Edit Purchase Order";
@@ -1831,6 +1906,7 @@
             document.getElementById('productSearch').placeholder = "Loading items...";
             AppState.itemCache = await getItemsForCategory(AppState.currentCategory);
             renderBrandFilters();
+            renderProductSearchResults('');
             document.getElementById('productSearch').placeholder = "Type to search or scan...";
         }
         
@@ -1845,21 +1921,34 @@
         function renderProductSearchResults(query) {
             const container = document.getElementById('productSearchResultsGrid');
             if(!container) return;
-            let items = AppState.itemCache;
+            
+            let items = [...AppState.itemCache];
+
+            const currentMode = AppState.currentFilterMode[AppState.currentCategory] || 'master';
+            if (currentMode === 'fastMoving') {
+                const fastMovingCodesKey = `fastMovingItemCodes_${AppState.currentCategory}`;
+                const fastMovingCodes = JSON.parse(localStorage.getItem(fastMovingCodesKey) || '[]');
+                if (fastMovingCodes.length > 0) {
+                    const codeSet = new Set(fastMovingCodes);
+                    items = items.filter(item => codeSet.has(String(item['Item Code'])));
+                } else {
+                    items = []; // If no fast moving list, show nothing
+                }
+            }
+
             if (AppState.selectedBrand !== 'All') {
                 items = items.filter(item => (item.BRAND || 'Unbranded') === AppState.selectedBrand);
             }
-            if (!query && AppState.selectedBrand === 'All') { 
-                container.innerHTML = `<div class="empty-state"><i class="material-icons">search</i><p>Start typing to find products</p></div>`; 
-                return;
-            }
+            
             const filteredItems = (query && query.length >= 1) 
                 ? items.filter(item => item['Item Name'] && item['Item Name'].toLowerCase().includes(query.toLowerCase()))
                 : items;
+
             if (filteredItems.length === 0) {
                 container.innerHTML = `<div class="empty-state"><i class="material-icons">search_off</i><p>No products found</p></div>`;
                 return;
             }
+            
             container.innerHTML = filteredItems.map(item => {
                 const defaultCost = parseFloat(item.Cost || item['Purchase Cost'] || 0);
                 return `
@@ -1913,8 +2002,10 @@
         }
 
         const updatePOTotal = () => {
+            const totalEl = document.getElementById('poTotalAmount');
+            if (!totalEl) return;
             AppState.newPO.total = AppState.newPO.items.reduce((sum, item) => sum + (item.qty * item.cost), 0);
-            document.getElementById('poTotalAmount').textContent = `₹${AppState.newPO.total.toFixed(2)}`;
+            totalEl.textContent = `₹${AppState.newPO.total.toFixed(2)}`;
         };
         
         function renderCalendar() {
@@ -1941,218 +2032,155 @@
         }
         
         async function generatePDF(poId) {
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF();
-    const pageWidth = doc.internal.pageSize.getWidth();
-    const pageHeight = doc.internal.pageSize.getHeight();
-    const margin = 14;
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            const pageWidth = doc.internal.pageSize.getWidth();
+            const pageHeight = doc.internal.pageSize.getHeight();
+            const margin = 14;
 
-    let poDoc = await db.collection('purchaseOrders').doc(poId).get();
-    if (!poDoc.exists) { 
-        poDoc = await db.collection('otherPurchases').doc(poId).get();
-    }
-    if (!poDoc.exists) { 
-        alert('Could not find order to generate PDF.'); 
-        return; 
-    }
+            let poDoc = await db.collection('purchaseOrders').doc(poId).get();
+            if (!poDoc.exists) { 
+                poDoc = await db.collection('otherPurchases').doc(poId).get();
+            }
+            if (!poDoc.exists) { 
+                alert('Could not find order to generate PDF.'); 
+                return; 
+            }
 
-    const po = poDoc.data();
+            const po = poDoc.data();
 
-    // --- START: ON-THE-FLY MRP FETCH LOGIC ---
-    const mrpMap = new Map();
-    // Only fetch MRPs if it's a standard PO with item codes
-    if (po.category !== 'OTHER PURCHASES' && po.items.length > 0) {
-        const itemCodes = po.items.map(item => item.itemCode);
-
-        // Chunk queries to handle more than 10 items
-        const CHUNK_SIZE = 10;
-        const queryChunks = [];
-        for (let i = 0; i < itemCodes.length; i += CHUNK_SIZE) {
-            const chunk = itemCodes.slice(i, i + CHUNK_SIZE);
-            const queryPromise = db.collection('items').where('Item Code', 'in', chunk).get();
-            queryChunks.push(queryPromise);
-        }
-
-        // Execute all queries and build the MRP map
-        const allSnapshots = await Promise.all(queryChunks);
-        allSnapshots.forEach(snapshot => {
-            snapshot.forEach(doc => {
-                const itemData = doc.data();
-                if (itemData && itemData['Item Code']) {
-                    mrpMap.set(itemData['Item Code'], itemData.MRP);
+            const mrpMap = new Map();
+            if (po.category !== 'OTHER PURCHASES' && po.items.length > 0) {
+                const itemCodes = po.items.map(item => item.itemCode);
+                const CHUNK_SIZE = 10;
+                const queryChunks = [];
+                for (let i = 0; i < itemCodes.length; i += CHUNK_SIZE) {
+                    const chunk = itemCodes.slice(i, i + CHUNK_SIZE);
+                    const queryPromise = db.collection('items').where('Item Code', 'in', chunk).get();
+                    queryChunks.push(queryPromise);
                 }
+                const allSnapshots = await Promise.all(queryChunks);
+                allSnapshots.forEach(snapshot => {
+                    snapshot.forEach(doc => {
+                        const itemData = doc.data();
+                        if (itemData && itemData['Item Code']) {
+                            mrpMap.set(itemData['Item Code'], itemData.MRP);
+                        }
+                    });
+                });
+            }
+
+            const tableData = po.items.map((item, index) => {
+                const freshMrp = mrpMap.get(item.itemCode) || item.mrp || 0; 
+                return [ 
+                    index + 1, 
+                    item.itemName, 
+                    parseFloat(freshMrp).toFixed(1), 
+                    item.qty 
+                ];
             });
-        });
-    }
-    // --- END: ON-THE-FLY MRP FETCH LOGIC ---
 
-    const tableData = po.items.map((item, index) => {
-        // Look up the fresh MRP. For old POs, this finds the value. For new POs, it confirms it.
-        // For "Other Purchases", it will default to 0.
-        const freshMrp = mrpMap.get(item.itemCode) || item.mrp || 0; 
-        
-        return [ 
-            index + 1, 
-            item.itemName, 
-            parseFloat(freshMrp).toFixed(1), 
-            item.qty 
-        ];
-    });
+            const lemongrassGreen = '#8BC34A';
+            const textColor = '#212529';
+            const secondaryColor = '#6c757d';
+            const topY = 10;
+            const logoData = localStorage.getItem('appLogo');
+            
+            if (logoData) {
+                try {
+                    const logoWidth = 40;
+                    const logoHeight = 20;
+                    const logoX = pageWidth - logoWidth - margin; 
+                    doc.addImage(logoData, 'PNG', logoX, topY, logoWidth, logoHeight);
+                } catch (e) { console.error("Error adding logo to PDF:", e); }
+            }
 
-    const lemongrassGreen = '#8BC34A';
-    const textColor = '#212529';
-    const secondaryColor = '#6c757d';
-    const topY = 10;
-    const logoData = localStorage.getItem('appLogo');
-    
-    if (logoData) {
-        try {
-            const logoWidth = 40;
-            const logoHeight = 20;
-            const logoX = pageWidth - logoWidth - margin; 
-            doc.addImage(logoData, 'PNG', logoX, topY, logoWidth, logoHeight);
-        } catch (e) { console.error("Error adding logo to PDF:", e); }
-    }
-
-    doc.setFontSize(22);
-    doc.setFont("helvetica", "bold");
-    doc.setTextColor(textColor);
-    doc.text("Purchase Order", margin, topY + 12);
-    
-    const middleY = topY + 25;
-    const rightAlignX = pageWidth - margin;
-    doc.setFontSize(11);
-    doc.setFont("helvetica", "normal");
-    doc.setTextColor(secondaryColor);
-    doc.text("From:", margin, middleY);
-    doc.setFont("helvetica", "bold");
-    doc.setTextColor(textColor);
-    doc.text("Metro Fresh", margin + 12, middleY);
-    doc.setFont("helvetica", "normal");
-    doc.setTextColor(secondaryColor);
-    doc.text("Bill To:", margin, middleY + 7);
-    doc.setFont("helvetica", "bold");
-    doc.setTextColor(textColor);
-    doc.text(po.vendor, margin + 15, middleY + 7);
-    
-    doc.setFontSize(10);
-    doc.setFont("helvetica", "bold");
-    doc.setTextColor(secondaryColor);
-    doc.text("PO Number:", rightAlignX - 40, middleY, { align: 'left' });
-    doc.text("PO Date:", rightAlignX - 40, middleY + 7, { align: 'left' });
-    
-    doc.setFont("helvetica", "normal");
-    doc.setTextColor(textColor);
-    doc.text(po.poNumber, rightAlignX, middleY, { align: 'right' });
-    doc.text(formatDisplayDate(po.date), rightAlignX, middleY + 7, { align: 'right' });
-    
-    const lineY = middleY + 15;
-    doc.setDrawColor(222, 226, 230);
-    doc.setLineWidth(0.5);
-    doc.line(margin, lineY, pageWidth - margin, lineY);
-    
-    doc.autoTable({
-        head: [['S.No.', 'Item Name', 'MRP', 'Quantity']], 
-        body: tableData, 
-        startY: lineY + 5,
-        theme: 'grid',
-        headStyles: { fillColor: lemongrassGreen, textColor: [255, 255, 255], fontSize: 10, halign: 'center' },
-        styles: { fontSize: 9, cellPadding: 1.5 },
-        columnStyles: { 
-            0: { halign: 'center', cellWidth: 15 }, 
-            1: { halign: 'left' }, 
-            2: { halign: 'right', cellWidth: 25 }, 
-            3: { halign: 'center', cellWidth: 25 }
-        },
-        didDrawPage: (data) => {
-            const footerText = "Thank you for your business!";
-            doc.setFontSize(10);
+            doc.setFontSize(22);
+            doc.setFont("helvetica", "bold");
+            doc.setTextColor(textColor);
+            doc.text("Purchase Order", margin, topY + 12);
+            
+            const middleY = topY + 25;
+            const rightAlignX = pageWidth - margin;
+            doc.setFontSize(11);
+            doc.setFont("helvetica", "normal");
             doc.setTextColor(secondaryColor);
-            doc.text(footerText, margin, pageHeight - 10);
-        }
-    });
-
-    doc.save(`PO_${po.vendor}_${po.date}.pdf`);
-}
-        document.body.addEventListener('click', async (e) => {
-                // REPLACE the old '#refreshMrpBtn' block with this one
-if (e.target.closest('#refreshMrpBtn')) {
-    const button = e.target.closest('#refreshMrpBtn');
-    const poId = button.dataset.poId;
-    const category = button.dataset.category;
-
-    if (!poId || category === 'OTHER PURCHASES') {
-        alert("This function is not applicable for 'Other Purchases'.");
-        return;
-    }
-
-    if (!confirm('This will update the MRP for all items in this PO with the latest master data. Do you want to continue?')) {
-        return;
-    }
-
-    alert('Refreshing MRP data... please wait.');
-
-    try {
-        // 1. Get the existing PO document
-        const poRef = db.collection('purchaseOrders').doc(poId);
-        const poDoc = await poRef.get();
-        if (!poDoc.exists) {
-            throw new Error("PO not found!");
-        }
-        
-        const poData = poDoc.data();
-        const itemCodes = poData.items.map(item => item.itemCode);
-
-        // --- START OF THE FIX ---
-
-        // 2. "Chunk" the item codes into arrays of 10 or less
-        const CHUNK_SIZE = 10;
-        const queryChunks = [];
-        for (let i = 0; i < itemCodes.length; i += CHUNK_SIZE) {
-            const chunk = itemCodes.slice(i, i + CHUNK_SIZE);
-            const queryPromise = db.collection('items').where('Item Code', 'in', chunk).get();
-            queryChunks.push(queryPromise);
-        }
-
-        // 3. Execute all queries in parallel and wait for all of them to complete
-        const allSnapshots = await Promise.all(queryChunks);
-
-        // 4. Combine the results from all snapshots into a single map
-        const mrpMap = new Map();
-        allSnapshots.forEach(snapshot => {
-            snapshot.forEach(doc => {
-                const itemData = doc.data();
-                if (itemData && itemData['Item Code']) {
-                    mrpMap.set(itemData['Item Code'], itemData.MRP);
+            doc.text("From:", margin, middleY);
+            doc.setFont("helvetica", "bold");
+            doc.setTextColor(textColor);
+            doc.text("Metro Fresh", margin + 12, middleY);
+            doc.setFont("helvetica", "normal");
+            doc.setTextColor(secondaryColor);
+            doc.text("Bill To:", margin, middleY + 7);
+            doc.setFont("helvetica", "bold");
+            doc.setTextColor(textColor);
+            doc.text(po.vendor, margin + 15, middleY + 7);
+            
+            doc.setFontSize(10);
+            doc.setFont("helvetica", "bold");
+            doc.setTextColor(secondaryColor);
+            doc.text("PO Number:", rightAlignX - 40, middleY, { align: 'left' });
+            doc.text("PO Date:", rightAlignX - 40, middleY + 7, { align: 'left' });
+            
+            doc.setFont("helvetica", "normal");
+            doc.setTextColor(textColor);
+            doc.text(po.poNumber, rightAlignX, middleY, { align: 'right' });
+            doc.text(formatDisplayDate(po.date), rightAlignX, middleY + 7, { align: 'right' });
+            
+            const lineY = middleY + 15;
+            doc.setDrawColor(222, 226, 230);
+            doc.setLineWidth(0.5);
+            doc.line(margin, lineY, pageWidth - margin, lineY);
+            
+            doc.autoTable({
+                head: [['S.No.', 'Item Name', 'MRP', 'Quantity']], 
+                body: tableData, 
+                startY: lineY + 5,
+                theme: 'grid',
+                headStyles: { fillColor: lemongrassGreen, textColor: [255, 255, 255], fontSize: 10, halign: 'center' },
+                styles: { fontSize: 9, cellPadding: 1.5 },
+                columnStyles: { 
+                    0: { halign: 'center', cellWidth: 15 }, 
+                    1: { halign: 'left' }, 
+                    2: { halign: 'right', cellWidth: 25 }, 
+                    3: { halign: 'center', cellWidth: 25 }
+                },
+                didDrawPage: (data) => {
+                    const footerText = "Thank you for your business!";
+                    doc.setFontSize(10);
+                    doc.setTextColor(secondaryColor);
+                    doc.text(footerText, margin, pageHeight - 10);
                 }
             });
-        });
 
-        // --- END OF THE FIX ---
+            doc.save(`PO_${po.vendor}_${po.date}.pdf`);
+        }
 
-        // 5. Create a new items array with updated MRPs
-        const updatedItems = poData.items.map(item => {
-            const latestMrp = mrpMap.get(item.itemCode);
-            return {
-                ...item,
-                mrp: latestMrp !== undefined ? latestMrp : item.mrp || 0
-            };
-        });
+        function renderCategoryUploadSections() {
+            const container = document.getElementById('categoryUploadSections');
+            const categories = ['FOOD', 'NONFOOD', 'REPACK', 'BAKESTORY', 'F&V', 'PROMOTER ITEMS'];
+            container.innerHTML = categories.map(cat => `
+                <div class="settings-upload-section">
+                    <h4>${cat}</h4>
+                    <div class="settings-upload-grid">
+                        <div class="form-group">
+                            <label style="font-size: 12px;">Master List (.csv)</label>
+                            <input type="file" class="form-control item-upload" data-category="${cat}" accept=".csv">
+                        </div>
+                        <div class="form-group">
+                            <label style="font-size: 12px;">Fast Moving List (.csv)</label>
+                            <input type="file" class="form-control fast-moving-upload" data-category="${cat}" accept=".csv">
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+            
+            // Re-attach event listeners after rendering
+            document.querySelectorAll('.item-upload').forEach(input => input.addEventListener('change', handleMasterListUpload));
+            document.querySelectorAll('.fast-moving-upload').forEach(input => input.addEventListener('change', handleFastMovingListUpload));
+        }
 
-        // 6. Update the PO document in Firestore
-        await poRef.update({ items: updatedItems });
-
-        alert('MRP data refreshed successfully!');
-        
-        // 7. Re-render the view to show the user the updated data immediately
-        await renderAdminVendorDetail(document.getElementById('adminContent'), category, poId);
-
-    } catch (error) {
-        console.error("Error refreshing MRP data:", error);
-        alert("An error occurred while refreshing MRPs.");
-    }
-}
-
+        document.body.addEventListener('click', async (e) => {
             if (e.target.closest('#firebaseLoginBtn')) {
                 const email = document.getElementById('emailInput').value;
                 const password = document.getElementById('loginPasswordInput').value;
@@ -2175,6 +2203,17 @@ if (e.target.closest('#refreshMrpBtn')) {
                 }
             }
             
+            const itemFilterBtn = e.target.closest('.item-filter-btn');
+            if(itemFilterBtn) {
+                const filterType = itemFilterBtn.dataset.filter;
+                AppState.currentFilterMode[AppState.currentCategory] = filterType;
+
+                document.querySelectorAll('.item-filter-btn').forEach(btn => btn.classList.remove('active'));
+                itemFilterBtn.classList.add('active');
+
+                renderProductSearchResults(document.getElementById('productSearch').value);
+            }
+
             if (e.target.closest('#editOrderBtn')) {
                 const button = e.target.closest('#editOrderBtn');
                 const poId = button.dataset.poId;
@@ -2242,7 +2281,6 @@ if (e.target.closest('#refreshMrpBtn')) {
             if (e.target.closest('#addPoBtn')) await navigateTo('newOrderPage');
             if (e.target.closest('#addOtherPurchaseBtn')) await navigateTo('newOtherPurchaseOrderPage');
             if (e.target.closest('#addVoucherBtn')) {
-                // Reset modal for new entry
                 document.getElementById('newVoucherModal').querySelector('.modal-title').textContent = 'New Voucher';
                 document.getElementById('editingVoucherId').value = '';
                 document.getElementById('voucherHeader').value = '';
@@ -2504,7 +2542,7 @@ if (e.target.closest('#refreshMrpBtn')) {
                     alert("Failed to save voucher.");
                 }
             }
-            if (e.target.closest('#settingsBtn')) { loadLogoPreview(); showModal('settingsModal'); }
+            if (e.target.closest('#settingsBtn')) { showModal('settingsModal'); }
             
             const approveBtn = e.target.closest('#approveBtn');
             if (approveBtn) {
@@ -2539,6 +2577,72 @@ if (e.target.closest('#refreshMrpBtn')) {
                     await batch.commit();
                     alert('Order deleted successfully.');
                     await goBack();
+                }
+            }
+
+            if (e.target.closest('#refreshMrpBtn')) {
+                const button = e.target.closest('#refreshMrpBtn');
+                const poId = button.dataset.poId;
+                const category = button.dataset.category;
+
+                if (!poId || category === 'OTHER PURCHASES') {
+                    alert("This function is not applicable for 'Other Purchases'.");
+                    return;
+                }
+
+                if (!confirm('This will update the MRP for all items in this PO with the latest master data. Do you want to continue?')) {
+                    return;
+                }
+
+                alert('Refreshing MRP data... please wait.');
+
+                try {
+                    const poRef = db.collection('purchaseOrders').doc(poId);
+                    const poDoc = await poRef.get();
+                    if (!poDoc.exists) {
+                        throw new Error("PO not found!");
+                    }
+                    
+                    const poData = poDoc.data();
+                    const itemCodes = poData.items.map(item => item.itemCode);
+
+                    const CHUNK_SIZE = 10;
+                    const queryChunks = [];
+                    for (let i = 0; i < itemCodes.length; i += CHUNK_SIZE) {
+                        const chunk = itemCodes.slice(i, i + CHUNK_SIZE);
+                        const queryPromise = db.collection('items').where('Item Code', 'in', chunk).get();
+                        queryChunks.push(queryPromise);
+                    }
+
+                    const allSnapshots = await Promise.all(queryChunks);
+
+                    const mrpMap = new Map();
+                    allSnapshots.forEach(snapshot => {
+                        snapshot.forEach(doc => {
+                            const itemData = doc.data();
+                            if (itemData && itemData['Item Code']) {
+                                mrpMap.set(itemData['Item Code'], itemData.MRP);
+                            }
+                        });
+                    });
+
+                    const updatedItems = poData.items.map(item => {
+                        const latestMrp = mrpMap.get(item.itemCode);
+                        return {
+                            ...item,
+                            mrp: latestMrp !== undefined ? latestMrp : item.mrp || 0
+                        };
+                    });
+
+                    await poRef.update({ items: updatedItems });
+
+                    alert('MRP data refreshed successfully!');
+                    
+                    await renderAdminVendorDetail(document.getElementById('adminContent'), category, poId);
+
+                } catch (error) {
+                    console.error("Error refreshing MRP data:", error);
+                    alert("An error occurred while refreshing MRPs.");
                 }
             }
             
@@ -2577,48 +2681,40 @@ if (e.target.closest('#refreshMrpBtn')) {
         });
         
         document.getElementById('productSearchResultsGrid').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const form = e.target;
-    if (!form.classList.contains('product-card-actions')) return;
+            e.preventDefault();
+            const form = e.target;
+            if (!form.classList.contains('product-card-actions')) return;
 
-    const itemName = form.dataset.itemName;
-    const itemCode = form.dataset.itemCode;
-    const finalCost = parseFloat(form.dataset.defaultCost);
-    const qtyInput = form.querySelector('.qty-input');
-    const qty = parseInt(qtyInput.value) || 1;
+            const itemName = form.dataset.itemName;
+            const itemCode = form.dataset.itemCode;
+            const finalCost = parseFloat(form.dataset.defaultCost);
+            const qtyInput = form.querySelector('.qty-input');
+            const qty = parseInt(qtyInput.value) || 1;
 
-    const existingItem = AppState.newPO.items.find(i => i.itemCode === itemCode);
-    if (existingItem) {
-        existingItem.qty += qty;
-    } else {
-        // Find the full item object from our cache to get its MRP
-        const fullItem = AppState.itemCache.find(i => i['Item Code'] === itemCode);
-        const itemMrp = fullItem ? fullItem.MRP : 0; // Get MRP, default to 0 if not found
+            const existingItem = AppState.newPO.items.find(i => i.itemCode === itemCode);
+            if (existingItem) {
+                existingItem.qty += qty;
+            } else {
+                const fullItem = AppState.itemCache.find(i => i['Item Code'] === itemCode);
+                const itemMrp = fullItem ? fullItem.MRP : 0;
+                AppState.newPO.items.push({ itemCode, itemName, cost: finalCost, qty, mrp: itemMrp });
+            }
 
-        // Add the 'mrp' property to the object we save
-        AppState.newPO.items.push({ 
-            itemCode: itemCode, 
-            itemName: itemName, 
-            cost: finalCost, 
-            qty: qty, 
-            mrp: itemMrp 
+            updateCartBadge();
+            if (!AppState.editingPoId) await updateDraftPO();
+            
+            qtyInput.value = '1';
+            const addButton = form.querySelector('.add-item-btn');
+            addButton.textContent = 'Added!';
+            addButton.classList.remove('btn-primary');
+            addButton.classList.add('btn-success');
+            setTimeout(() => {
+                addButton.textContent = 'Add';
+                addButton.classList.remove('btn-success');
+                addButton.classList.add('btn-primary');
+            }, 1000);
         });
-    }
 
-    updateCartBadge();
-    if (!AppState.editingPoId) await updateDraftPO();
-    
-    qtyInput.value = '1';
-    const addButton = form.querySelector('.add-item-btn');
-    addButton.textContent = 'Added!';
-    addButton.classList.remove('btn-primary');
-    addButton.classList.add('btn-success');
-    setTimeout(() => {
-        addButton.textContent = 'Add';
-        addButton.classList.remove('btn-success');
-        addButton.classList.add('btn-primary');
-    }, 1000);
-});
         document.getElementById('addOtherItemForm').addEventListener('submit', (e) => {
             e.preventDefault();
             const itemNameInput = document.getElementById('otherItemName');
@@ -2669,38 +2765,51 @@ if (e.target.closest('#refreshMrpBtn')) {
             });
         });
         
-        document.querySelectorAll('.item-upload').forEach(input => {
-            input.addEventListener('change', e => {
-                const category = e.target.dataset.category;
-                handleFileUpload(e.target.files[0], async (data) => {
-                    const batch = db.batch();
-                    let validItemsCount = 0;
-                    data.forEach(item => {
-                        const cleanedItem = {};
-                        for (const key in item) {
-                            cleanedItem[key.trim()] = item[key];
-                        }
-                        const itemCode = cleanedItem['Item Code'];
-                        const itemName = cleanedItem['Item Name'];
-                        if (itemCode && itemName && itemCode.trim() !== '' && itemName.trim() !== '') {
-                            const docRef = db.collection('items').doc();
-                            const newItem = {
-                                'Item Code': itemCode, 'Item Name': itemName,
-                                'MRP': parseFloat(cleanedItem.MRP || 0),
-                                'Cost': parseFloat(cleanedItem['Purchase Cost'] || cleanedItem.Cost || 0),
-                                'BRAND': cleanedItem.BRAND || 'Unbranded',
-                                'EAN Code': cleanedItem['EAN code'] || cleanedItem['EAN Code'] || '',
-                                'category': category
-                            };
-                            batch.set(docRef, newItem);
-                            validItemsCount++;
-                        }
-                    });
-                    await batch.commit();
-                    alert(`Uploaded ${validItemsCount} items for ${category} to Firestore.`);
+        const handleMasterListUpload = (e) => {
+            const category = e.target.dataset.category;
+            handleFileUpload(e.target.files[0], async (data) => {
+                const batch = db.batch();
+                let validItemsCount = 0;
+                data.forEach(item => {
+                    const cleanedItem = {};
+                    for (const key in item) {
+                        cleanedItem[key.trim()] = item[key];
+                    }
+                    const itemCode = cleanedItem['Item Code'];
+                    const itemName = cleanedItem['Item Name'];
+                    if (itemCode && itemName && itemCode.trim() !== '' && itemName.trim() !== '') {
+                        const docRef = db.collection('items').doc();
+                        const newItem = {
+                            'Item Code': itemCode, 'Item Name': itemName,
+                            'MRP': parseFloat(cleanedItem.MRP || 0),
+                            'Cost': parseFloat(cleanedItem['Purchase Cost'] || cleanedItem.Cost || 0),
+                            'BRAND': cleanedItem.BRAND || 'Unbranded',
+                            'EAN Code': cleanedItem['EAN code'] || cleanedItem['EAN Code'] || '',
+                            'category': category
+                        };
+                        batch.set(docRef, newItem);
+                        validItemsCount++;
+                    }
                 });
+                await batch.commit();
+                alert(`Uploaded ${validItemsCount} items for ${category} to Firestore.`);
             });
-        });
+        };
+
+        const handleFastMovingListUpload = (e) => {
+            const category = e.target.dataset.category;
+            handleFileUpload(e.target.files[0], (data) => {
+                if (data.length === 0 || !data[0]['Item Code']) {
+                    alert("Error: CSV must contain a column named 'Item Code'.");
+                    return;
+                }
+                const codes = data
+                    .map(row => row['Item Code'] ? String(row['Item Code']).trim() : null)
+                    .filter(code => code);
+                localStorage.setItem(`fastMovingItemCodes_${category}`, JSON.stringify(codes));
+                alert(`Uploaded ${codes.length} fast-moving item codes for ${category}.`);
+            });
+        };
         
         const debouncedProductSearch = debounce((event) => renderProductSearchResults(event.target.value));
         document.getElementById('productSearch').addEventListener('keyup', debouncedProductSearch);
