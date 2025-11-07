@@ -1152,7 +1152,6 @@
                 </div>
                 <hr style="margin: 20px 0;">
                 
-                <!-- NEW UPLOAD SECTIONS PER CATEGORY -->
                 <div id="categoryUploadSections"></div>
 
             </div>
@@ -1258,13 +1257,14 @@
         const AppState = {
             history: ['loginPage'],
             currentCategory: null,
-            currentFilterMode: {}, // Object to hold filter mode per category
+            currentFilterMode: {},
             currentDate: new Date(),
             adminDrilldown: [],
             newPO: { vendor: null, items: [], total: 0 },
             newOtherPO: { vendor: null, items: [], total: 0 },
             appLogo: null,
             itemCache: [],
+            fastMovingCache: [],
             vendorCache: [],
             editingPoId: null
         };
@@ -1387,6 +1387,8 @@
             
             if (currentPage === 'newOrderPage' || currentPage === 'newOtherPurchaseOrderPage') {
                 AppState.editingPoId = null;
+                AppState.itemCache = [];
+                AppState.fastMovingCache = [];
             }
 
             if (AppState.history.length > 1) {
@@ -1817,7 +1819,6 @@
             AppState.currentCategory = category;
             document.getElementById('categoryTitle').textContent = `${category}`;
             
-            // Set the initial filter mode for this category if it's not already set
             if (!AppState.currentFilterMode[category]) {
                 AppState.currentFilterMode[category] = 'master';
             }
@@ -1871,9 +1872,8 @@
             const vendorSearch = document.getElementById('vendorSearch');
             AppState.editingPoId = editingPoId;
 
-            // Update filter button state
             const currentMode = AppState.currentFilterMode[AppState.currentCategory] || 'master';
-            document.querySelectorAll('.item-filter-btn').forEach(btn => {
+            document.querySelectorAll('#newOrderPage .item-filter-btn').forEach(btn => {
                 btn.classList.toggle('active', btn.dataset.filter === currentMode);
             });
 
@@ -1905,6 +1905,14 @@
             }
             document.getElementById('productSearch').placeholder = "Loading items...";
             AppState.itemCache = await getItemsForCategory(AppState.currentCategory);
+            
+            const fastMovingDoc = await db.collection('fastMovingItems').doc(AppState.currentCategory).get();
+            if (fastMovingDoc.exists) {
+                AppState.fastMovingCache = fastMovingDoc.data().itemCodes || [];
+            } else {
+                AppState.fastMovingCache = [];
+            }
+
             renderBrandFilters();
             renderProductSearchResults('');
             document.getElementById('productSearch').placeholder = "Type to search or scan...";
@@ -1926,13 +1934,11 @@
 
             const currentMode = AppState.currentFilterMode[AppState.currentCategory] || 'master';
             if (currentMode === 'fastMoving') {
-                const fastMovingCodesKey = `fastMovingItemCodes_${AppState.currentCategory}`;
-                const fastMovingCodes = JSON.parse(localStorage.getItem(fastMovingCodesKey) || '[]');
-                if (fastMovingCodes.length > 0) {
-                    const codeSet = new Set(fastMovingCodes);
+                if (AppState.fastMovingCache.length > 0) {
+                    const codeSet = new Set(AppState.fastMovingCache);
                     items = items.filter(item => codeSet.has(String(item['Item Code'])));
                 } else {
-                    items = []; // If no fast moving list, show nothing
+                    items = [];
                 }
             }
 
@@ -2175,7 +2181,6 @@
                 </div>
             `).join('');
             
-            // Re-attach event listeners after rendering
             document.querySelectorAll('.item-upload').forEach(input => input.addEventListener('change', handleMasterListUpload));
             document.querySelectorAll('.fast-moving-upload').forEach(input => input.addEventListener('change', handleFastMovingListUpload));
         }
@@ -2796,9 +2801,9 @@
             });
         };
 
-        const handleFastMovingListUpload = (e) => {
+        const handleFastMovingListUpload = async (e) => {
             const category = e.target.dataset.category;
-            handleFileUpload(e.target.files[0], (data) => {
+            handleFileUpload(e.target.files[0], async (data) => {
                 if (data.length === 0 || !data[0]['Item Code']) {
                     alert("Error: CSV must contain a column named 'Item Code'.");
                     return;
@@ -2806,8 +2811,14 @@
                 const codes = data
                     .map(row => row['Item Code'] ? String(row['Item Code']).trim() : null)
                     .filter(code => code);
-                localStorage.setItem(`fastMovingItemCodes_${category}`, JSON.stringify(codes));
-                alert(`Uploaded ${codes.length} fast-moving item codes for ${category}.`);
+
+                try {
+                    await db.collection('fastMovingItems').doc(category).set({ itemCodes: codes });
+                    alert(`Successfully uploaded ${codes.length} fast-moving item codes for ${category} to Firestore.`);
+                } catch (error) {
+                    console.error("Error saving fast moving list:", error);
+                    alert("Failed to save the list to the database.");
+                }
             });
         };
         
