@@ -1271,7 +1271,7 @@
         
         const SUPERMARKET_LAT = 11.989993133727276; 
         const SUPERMARKET_LON = 75.67562654875947;
-        const ALLOWED_RADIUS_METERS = 3000;
+        const ALLOWED_RADIUS_METERS = 300;
 
         auth.onAuthStateChanged(async (user) => {
             const firebaseLoginPage = document.getElementById('firebaseLoginPage');
@@ -2321,11 +2321,25 @@
                     if (!poDoc.exists) { alert("Error: Could not find the selected order."); return; }
                     
                     const po = poDoc.data();
-                    const isApproved = await getApprovalStatus(poId);
+                    // Replace the old block with this new one
+const isApproved = await getApprovalStatus(poId);
 
-                    let headerActionsHTML = isApproved
-                        ? `<i class="material-icons" style="color: var(--success-color);">check_circle</i>`
-                        : `<button class="icon-button" id="modalEditBtn" data-po-id="${poId}" data-category="${po.category}"><i class="material-icons">edit</i></button>`;
+let headerActionsHTML = '';
+if (isApproved) {
+    // If approved, create a download button. This is the same button as in the admin panel.
+    headerActionsHTML = `
+        <button class="icon-button" id="downloadPdfBtn" data-po-id="${poId}" title="Download PDF">
+            <i class="material-icons">download</i>
+        </button>
+    `;
+} else {
+    // If not approved, keep the edit button as before.
+    headerActionsHTML = `
+        <button class="icon-button" id="modalEditBtn" data-po-id="${poId}" data-category="${po.category}" title="Edit Order">
+            <i class="material-icons">edit</i>
+        </button>
+    `;
+}
 
                     const poDetailsModal = document.getElementById('poDetailsModal');
                     poDetailsModal.querySelector('.modal-header').innerHTML = `
