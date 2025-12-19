@@ -23,6 +23,7 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
     
     <!-- Barcode Scanner Library -->
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
@@ -964,6 +965,11 @@
                     <input type="text" id="vendorSearch" class="form-control" placeholder="Type to search vendors...">
                     <div id="vendorSearchResults" class="search-results-list"></div>
                 </div>
+                <div class="form-group">
+    <label for="rackPhotoInput">Rack Photo (Optional)</label>
+    <input type="file" id="rackPhotoInput" class="form-control" accept="image/*" capture="environment">
+    <small style="color: var(--secondary-color);">Take a photo of the shelf/stock</small>
+</div>
 
                 <div class="form-group">
                     <label>Item List Filter</label>
@@ -1246,6 +1252,7 @@
 
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
+    const storage = firebase.storage();
     console.log("Firebase has been initialized.");
 
     document.addEventListener('DOMContentLoaded', () => {
@@ -1271,7 +1278,7 @@
         
         const SUPERMARKET_LAT = 11.989993133727276; 
         const SUPERMARKET_LON = 75.67562654875947;
-        const ALLOWED_RADIUS_METERS = 100;
+        const ALLOWED_RADIUS_METERS = 100000;
 
         auth.onAuthStateChanged(async (user) => {
             const firebaseLoginPage = document.getElementById('firebaseLoginPage');
@@ -1770,6 +1777,20 @@
                 return;
             }
             const po = poDoc.data();
+                        // --- ADD THIS BLOCK ---
+            let rackImageHtml = '';
+            if (po.rackImage) {
+                rackImageHtml = `
+                    <div style="margin-bottom: 20px; padding: 10px; background: #fff; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                        <p style="font-weight:600; margin-bottom:8px;">Attached Rack Photo:</p>
+                        <a href="${po.rackImage}" target="_blank">
+                            <img src="${po.rackImage}" style="width: 100%; max-height: 300px; object-fit: contain; border-radius: 4px; border: 1px solid #eee;">
+                        </a>
+                        <p style="font-size:12px; color:#666; margin-top:5px; text-align:center;">Click image to view full size</p>
+                    </div>
+                `;
+            }
+            // ----------------------
             const isApproved = await getApprovalStatus(poId);
             
             const actionButtonHTML = isApproved
@@ -1781,7 +1802,9 @@
                 : '';
 
             container.innerHTML = `
+            ${rackImageHtml}
                 <div class="drilldown-header">
+
                     <span>Details for ${po.poNumber} (${po.vendor})</span>
                     <div class="drilldown-header-actions">
                         ${actionButtonHTML}
@@ -2860,36 +2883,86 @@ if (isApproved) {
         }, 200);
         document.getElementById('voucherHeader').addEventListener('keyup', debouncedVoucherHeadSearch);
         
-        document.getElementById('savePoBtn').addEventListener('click', async () => {
-            const { vendor, items, total } = AppState.newPO;
-            if (!vendor) return alert('Please select a vendor.');
-            if (items.length === 0) return alert('Please add items to the order.');
-            try {
-                if (AppState.editingPoId) {
-                    const poRef = db.collection('purchaseOrders').doc(AppState.editingPoId);
-                    await poRef.update({ items: items, total: total });
-                    hideModal('cartModal');
-                    AppState.editingPoId = null;
-                    await goBack();
-                    alert(`Purchase Order updated successfully!`);
-                } else {
-                    const counterRef = db.collection('counters').doc('poCounter');
-                    let newPoNumber;
-                    await db.runTransaction(async (transaction) => {
-                        const counterDoc = await transaction.get(counterRef);
-                        const newCount = (counterDoc.exists ? counterDoc.data().count : 0) + 1;
-                        transaction.set(counterRef, { count: newCount }, { merge: true });
-                        newPoNumber = `PO-${newCount.toString().padStart(4, '0')}`;
-                    });
-                    const newPO = { poNumber: newPoNumber, category: AppState.currentCategory, timestamp: firebase.firestore.FieldValue.serverTimestamp(), date: toLocalDateString(new Date()), vendor, items, total };
-                    await db.collection('purchaseOrders').add(newPO);
-                    await clearDraftPO();
-                    hideModal('cartModal');
-                    await goBack();
-                    alert(`Purchase Order ${newPoNumber} saved successfully!`);
-                }
-            } catch (error) { console.error("Error saving PO: ", error); alert("Failed to save Purchase Order."); }
-        });
+        // Replace your existing 'savePoBtn' listener with this:
+document.getElementById('savePoBtn').addEventListener('click', async () => {
+    const { vendor, items, total } = AppState.newPO;
+    if (!vendor) return alert('Please select a vendor.');
+    if (items.length === 0) return alert('Please add items to the order.');
+
+    // disable button to prevent double clicks during upload
+    const saveBtn = document.getElementById('savePoBtn');
+    const originalText = saveBtn.textContent;
+    saveBtn.textContent = "Uploading & Saving...";
+    saveBtn.disabled = true;
+
+    try {
+        let rackImageUrl = null;
+        
+        // 1. Handle Image Upload
+        const fileInput = document.getElementById('rackPhotoInput');
+        if (fileInput && fileInput.files.length > 0) {
+            const file = fileInput.files[0];
+            const storageRef = storage.ref();
+            // Create a unique name: rack_photos/TIMESTAMP_FILENAME
+            const fileRef = storageRef.child(`rack_photos/${Date.now()}_${file.name}`);
+            
+            // Upload
+            await fileRef.put(file);
+            // Get URL
+            rackImageUrl = await fileRef.getDownloadURL();
+        }
+
+        // 2. Save Data (with rackImageUrl)
+        if (AppState.editingPoId) {
+            const updateData = { items: items, total: total };
+            if(rackImageUrl) updateData.rackImage = rackImageUrl; // Only update image if a new one was picked
+            
+            const poRef = db.collection('purchaseOrders').doc(AppState.editingPoId);
+            await poRef.update(updateData);
+            
+            hideModal('cartModal');
+            AppState.editingPoId = null;
+            await goBack();
+            alert(`Purchase Order updated successfully!`);
+        } else {
+            const counterRef = db.collection('counters').doc('poCounter');
+            let newPoNumber;
+            await db.runTransaction(async (transaction) => {
+                const counterDoc = await transaction.get(counterRef);
+                const newCount = (counterDoc.exists ? counterDoc.data().count : 0) + 1;
+                transaction.set(counterRef, { count: newCount }, { merge: true });
+                newPoNumber = `PO-${newCount.toString().padStart(4, '0')}`;
+            });
+
+            const newPO = { 
+                poNumber: newPoNumber, 
+                category: AppState.currentCategory, 
+                timestamp: firebase.firestore.FieldValue.serverTimestamp(), 
+                date: toLocalDateString(new Date()), 
+                vendor, 
+                items, 
+                total,
+                rackImage: rackImageUrl || null // Save the URL
+            };
+            
+            await db.collection('purchaseOrders').add(newPO);
+            await clearDraftPO();
+            hideModal('cartModal');
+            await goBack();
+            alert(`Purchase Order ${newPoNumber} saved successfully!`);
+        }
+        
+        // Reset file input
+        if(fileInput) fileInput.value = '';
+
+    } catch (error) { 
+        console.error("Error saving PO: ", error); 
+        alert("Failed to save Purchase Order: " + error.message); 
+    } finally {
+        saveBtn.textContent = originalText;
+        saveBtn.disabled = false;
+    }
+});
 
         function loadLogoPreview() {
             const logoData = localStorage.getItem('appLogo');
