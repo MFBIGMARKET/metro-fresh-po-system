@@ -875,7 +875,7 @@
                 <p>PO SYSTEM LOGIN</p>
             </div>
             <div style="max-width: 400px; margin: 0 auto; width: 100%;">
-                <div class="form-group">
+                <div class="form-group" style="display: none;">
                     <label for="emailInput">Email</label>
                     <input type="email" id="emailInput" class="form-control" placeholder="Enter your email">
                 </div>
@@ -1280,76 +1280,11 @@
         const SUPERMARKET_LON = 75.67562654875947;
         const ALLOWED_RADIUS_METERS = 100000;
 
-        auth.onAuthStateChanged(async (user) => {
-            const firebaseLoginPage = document.getElementById('firebaseLoginPage');
-            const appContainer = document.getElementById('appContainer');
+        
 
-            if (user) {
-                const idTokenResult = await user.getIdTokenResult(true);
-                const userRole = idTokenResult.claims.role;
+        
 
-                firebaseLoginPage.classList.remove('active');
-                allPages.forEach(p => p.id !== 'firebaseLoginPage' && p.classList.remove('active'));
-
-                if (userRole === 'admin') {
-                    document.getElementById('locationBlocker').style.display = 'none';
-                    appContainer.style.display = 'block';
-                    navigateTo('loginPage', {}, true);
-                } else {
-                    checkLocationAndInitializeApp();
-                }
-            } else {
-                appContainer.style.display = 'none';
-                document.getElementById('locationBlocker').style.display = 'none';
-                allPages.forEach(p => p.classList.remove('active'));
-                firebaseLoginPage.classList.add('active');
-            }
-        });
-
-        function getDistance(lat1, lon1, lat2, lon2) {
-            const R = 6371e3;
-            const φ1 = lat1 * Math.PI/180;
-            const φ2 = lat2 * Math.PI/180;
-            const Δφ = (lat2-lat1) * Math.PI/180;
-            const Δλ = (lon2-lon1) * Math.PI/180;
-            const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) + Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ/2) * Math.sin(Δλ/2);
-            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-            return R * c;
-        }
-
-        function checkLocationAndInitializeApp() {
-            const blocker = document.getElementById('locationBlocker');
-            const appContainer = document.getElementById('appContainer');
-            
-            if (!navigator.geolocation) {
-                blocker.querySelector('p').textContent = "Geolocation is not supported by your browser.";
-                blocker.style.display = 'flex';
-                return;
-            }
-            
-            navigator.geolocation.getCurrentPosition(
-                (position) => {
-                    const userLat = position.coords.latitude;
-                    const userLon = position.coords.longitude;
-                    const distance = getDistance(SUPERMARKET_LAT, SUPERMARKET_LON, userLat, userLon);
-                    
-                    if (distance <= ALLOWED_RADIUS_METERS) {
-                        blocker.style.display = 'none';
-                        appContainer.style.display = 'block';
-                        navigateTo('loginPage', {}, true);
-                    } else {
-                        blocker.querySelector('p:last-child').textContent = "This app can only be used within the supermarket premises.";
-                        blocker.style.display = 'flex';
-                        appContainer.style.display = 'none';
-                    }
-                },
-                () => {
-                    blocker.querySelector('p:last-child').textContent = "Location access was denied. Please enable location services to use the app.";
-                    blocker.style.display = 'flex';
-                    appContainer.style.display = 'none';
-                }
-            );
-        }
+        
 
         const allPages = document.querySelectorAll('.page');
         
@@ -2211,24 +2146,27 @@
 
         document.body.addEventListener('click', async (e) => {
             if (e.target.closest('#firebaseLoginBtn')) {
-                const email = document.getElementById('emailInput').value;
                 const password = document.getElementById('loginPasswordInput').value;
                 const errorEl = document.getElementById('firebaseLoginError');
 
-                auth.signInWithEmailAndPassword(email, password)
-                    .catch((error) => {
-                        if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
-                            errorEl.textContent = 'Invalid email or password.';
-                        } else {
-                            errorEl.textContent = 'An error occurred. Please try again.';
-                        }
-                        errorEl.style.display = 'block';
-                    });
+                // Check against the hardcoded ADMIN_PASSWORD ("Adm456")
+                if (password === ADMIN_PASSWORD) {
+                    errorEl.style.display = 'none';
+                    document.getElementById('loginPasswordInput').value = '';
+                    
+                    // Hide login screen, show the app
+                    document.getElementById('firebaseLoginPage').classList.remove('active');
+                    document.getElementById('appContainer').style.display = 'block';
+                    navigateTo('loginPage', {}, true);
+                } else {
+                    errorEl.textContent = 'Incorrect password.';
+                    errorEl.style.display = 'block';
+                }
             }
 
             if (e.target.closest('.logout-btn')) {
                 if (confirm('Are you sure you want to logout?')) {
-                    auth.signOut();
+                    location.reload(); // Refresh the page to lock the app
                 }
             }
             
