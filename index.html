@@ -21,7 +21,6 @@
 
     <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
     
@@ -140,7 +139,7 @@
             min-height: 0;
         }
         
-        #loginPage, #firebaseLoginPage {
+        #loginPage {
             justify-content: center;
             align-items: center;
         }
@@ -149,12 +148,9 @@
             height: 100%;
             display: flex;
             flex-direction: column;
-            justify-content: center;
+            justify-content: flex-start;
             padding: 20px;
-        }
-        #loginPage .login-container {
-             justify-content: flex-start;
-             padding-top: 5vh;
+            padding-top: 5vh;
         }
         .login-header {
             text-align: center;
@@ -868,38 +864,9 @@
 </head>
 <body>
 
-    <div id="firebaseLoginPage" class="page active">
-        <div class="login-container">
-            <div class="login-header">
-                <h1>METRO FRESH</h1>
-                <p>PO SYSTEM LOGIN</p>
-            </div>
-            <div style="max-width: 400px; margin: 0 auto; width: 100%;">
-                <div class="form-group" style="display: none;">
-                    <label for="emailInput">Email</label>
-                    <input type="email" id="emailInput" class="form-control" placeholder="Enter your email">
-                </div>
-                <div class="form-group">
-                    <label for="loginPasswordInput">Password</label>
-                    <input type="password" id="loginPasswordInput" class="form-control" placeholder="Enter your password">
-                </div>
-                <p id="firebaseLoginError" style="color: var(--danger-color); display: none; text-align: center; margin-bottom: 15px;"></p>
-                <button class="btn btn-primary" id="firebaseLoginBtn" style="width:100%;">Login</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="locationBlocker" style="position:fixed; top:0; left:0; width:100%; height:100%; background-color:var(--background-color); z-index:9999; display:none; justify-content:center; align-items:center;">
-        <div class="empty-state">
-            <i class="material-icons">location_off</i>
-            <p>Access Denied</p>
-            <p style="font-size:14px; margin-top:10px;">This app can only be used within the supermarket premises.</p>
-        </div>
-    </div>
-
-    <div id="appContainer" style="display: none;">
-        <div id="loginPage" class="page">
-            <button class="icon-button main-page-logout logout-btn" title="Logout"><i class="material-icons">logout</i></button>
+    <div id="appContainer">
+        <div id="loginPage" class="page active">
+            <button class="icon-button main-page-logout logout-btn" title="Refresh"><i class="material-icons">refresh</i></button>
             <div class="login-container">
                 <div class="login-header">
                     <h1>METRO FRESH</h1>
@@ -966,10 +933,10 @@
                     <div id="vendorSearchResults" class="search-results-list"></div>
                 </div>
                 <div class="form-group">
-    <label for="rackPhotoInput">Rack Photo (Optional)</label>
-    <input type="file" id="rackPhotoInput" class="form-control" accept="image/*" capture="environment">
-    <small style="color: var(--secondary-color);">Take a photo of the shelf/stock</small>
-</div>
+                    <label for="rackPhotoInput">Rack Photo (Optional)</label>
+                    <input type="file" id="rackPhotoInput" class="form-control" accept="image/*" capture="environment">
+                    <small style="color: var(--secondary-color);">Take a photo of the shelf/stock</small>
+                </div>
 
                 <div class="form-group">
                     <label>Item List Filter</label>
@@ -1010,7 +977,7 @@
                 <div class="header-side right">
                     <button class="icon-button calendar-btn"><i class="material-icons">calendar_today</i></button>
                     <button class="icon-button" id="settingsBtn"><i class="material-icons">settings</i></button>
-                    <button class="icon-button logout-btn" title="Logout"><i class="material-icons">logout</i></button>
+                    <button class="icon-button logout-btn" title="Refresh"><i class="material-icons">refresh</i></button>
                 </div>
             </div>
             <div class="content" id="adminContent"></div>
@@ -1243,11 +1210,11 @@
 <script>
     const firebaseConfig = {
       apiKey: "AIzaSyAaCIqRl9bf6mVVZSH5T3PrPicVELnCu6U",
-  authDomain: "posystem-496da.firebaseapp.com",
-  projectId: "posystem-496da",
-  storageBucket: "posystem-496da.firebasestorage.app",
-  messagingSenderId: "975837782909",
-  appId: "1:975837782909:web:944a4c9a034f13107fe214"
+      authDomain: "posystem-496da.firebaseapp.com",
+      projectId: "posystem-496da",
+      storageBucket: "posystem-496da.firebasestorage.app",
+      messagingSenderId: "975837782909",
+      appId: "1:975837782909:web:944a4c9a034f13107fe214"
     };
 
     firebase.initializeApp(firebaseConfig);
@@ -1257,9 +1224,11 @@
 
     document.addEventListener('DOMContentLoaded', () => {
         
-        const auth = firebase.auth();
         let html5QrCode = null;
+        
+        // Passwords for Admin and Higher Authority
         const ADMIN_PASSWORD = "Adm456";
+        const HA_PASSWORD = "Auth789"; 
     
         const AppState = {
             history: ['loginPage'],
@@ -1275,16 +1244,6 @@
             vendorCache: [],
             editingPoId: null
         };
-        
-        const SUPERMARKET_LAT = 11.989993133727276; 
-        const SUPERMARKET_LON = 75.67562654875947;
-        const ALLOWED_RADIUS_METERS = 100000;
-
-        
-
-        
-
-        
 
         const allPages = document.querySelectorAll('.page');
         
@@ -1560,7 +1519,9 @@
         
         async function getApprovalStatus(approvalKey) {
             const doc = await db.collection('approvals').doc(approvalKey).get();
-            return doc.exists;
+            if (!doc.exists) return null; // Not approved yet
+            // If the document exists but lacks a status (legacy data), default to 'ha_approved' so old orders don't break
+            return doc.data().status || 'ha_approved'; 
         }
 
         async function renderAdminPage() {
@@ -1712,7 +1673,7 @@
                 return;
             }
             const po = poDoc.data();
-                        // --- ADD THIS BLOCK ---
+            
             let rackImageHtml = '';
             if (po.rackImage) {
                 rackImageHtml = `
@@ -1725,14 +1686,19 @@
                     </div>
                 `;
             }
-            // ----------------------
-            const isApproved = await getApprovalStatus(poId);
             
-            const actionButtonHTML = isApproved
-                ? `<button class="btn btn-success" id="downloadPdfBtn" data-po-id="${poId}"><i class="material-icons" style="font-size: 18px; vertical-align: middle; margin-right: 5px;">picture_as_pdf</i>Download PDF</button>`
-                : `<button class="btn btn-primary" id="approveBtn" data-po-id="${poId}"><i class="material-icons" style="font-size: 18px; vertical-align: middle; margin-right: 5px;">check_circle</i>Approve Order</button>`;
+            const approvalStatus = await getApprovalStatus(poId);
             
-            const refreshButtonHTML = (category !== 'OTHER PURCHASES' && !isApproved) 
+            let actionButtonHTML = '';
+            if (approvalStatus === 'ha_approved') {
+                actionButtonHTML = `<button class="btn btn-success" id="downloadPdfBtn" data-po-id="${poId}"><i class="material-icons" style="font-size: 18px; vertical-align: middle; margin-right: 5px;">picture_as_pdf</i>Download PDF</button>`;
+            } else if (approvalStatus === 'admin_approved') {
+                actionButtonHTML = `<button class="btn" id="verifyBtn" data-po-id="${poId}" style="background-color: var(--warning-color); color: #000; font-weight: 600;"><i class="material-icons" style="font-size: 18px; vertical-align: middle; margin-right: 5px;">verified_user</i>Verify Order (HA)</button>`;
+            } else {
+                actionButtonHTML = `<button class="btn btn-primary" id="approveBtn" data-po-id="${poId}"><i class="material-icons" style="font-size: 18px; vertical-align: middle; margin-right: 5px;">check_circle</i>Approve Order</button>`;
+            }
+            
+            const refreshButtonHTML = (category !== 'OTHER PURCHASES' && !approvalStatus) 
                 ? `<button class="btn btn-primary" id="refreshMrpBtn" data-po-id="${poId}" data-category="${po.category}" title="Refresh MRP Data"><i class="material-icons" style="font-size: 18px; vertical-align: middle;">sync</i></button>` 
                 : '';
 
@@ -2145,28 +2111,10 @@
         }
 
         document.body.addEventListener('click', async (e) => {
-            if (e.target.closest('#firebaseLoginBtn')) {
-                const password = document.getElementById('loginPasswordInput').value;
-                const errorEl = document.getElementById('firebaseLoginError');
-
-                // Check against the hardcoded ADMIN_PASSWORD ("Adm456")
-                if (password === ADMIN_PASSWORD) {
-                    errorEl.style.display = 'none';
-                    document.getElementById('loginPasswordInput').value = '';
-                    
-                    // Hide login screen, show the app
-                    document.getElementById('firebaseLoginPage').classList.remove('active');
-                    document.getElementById('appContainer').style.display = 'block';
-                    navigateTo('loginPage', {}, true);
-                } else {
-                    errorEl.textContent = 'Incorrect password.';
-                    errorEl.style.display = 'block';
-                }
-            }
 
             if (e.target.closest('.logout-btn')) {
-                if (confirm('Are you sure you want to logout?')) {
-                    location.reload(); // Refresh the page to lock the app
+                if (confirm('Refresh Application?')) {
+                    location.reload(); 
                 }
             }
             
@@ -2283,25 +2231,27 @@
                     if (!poDoc.exists) { alert("Error: Could not find the selected order."); return; }
                     
                     const po = poDoc.data();
-                    // Replace the old block with this new one
-const isApproved = await getApprovalStatus(poId);
+                    
+                    const approvalStatus = await getApprovalStatus(poId);
 
-let headerActionsHTML = '';
-if (isApproved) {
-    // If approved, create a download button. This is the same button as in the admin panel.
-    headerActionsHTML = `
-        <button class="icon-button" id="downloadPdfBtn" data-po-id="${poId}" title="Download PDF">
-            <i class="material-icons">download</i>
-        </button>
-    `;
-} else {
-    // If not approved, keep the edit button as before.
-    headerActionsHTML = `
-        <button class="icon-button" id="modalEditBtn" data-po-id="${poId}" data-category="${po.category}" title="Edit Order">
-            <i class="material-icons">edit</i>
-        </button>
-    `;
-}
+                    let headerActionsHTML = '';
+                    if (approvalStatus === 'ha_approved') {
+                        headerActionsHTML = `
+                            <button class="icon-button" id="downloadPdfBtn" data-po-id="${poId}" title="Download PDF">
+                                <i class="material-icons">download</i>
+                            </button>
+                        `;
+                    } else if (approvalStatus === 'admin_approved') {
+                        headerActionsHTML = `
+                            <span style="font-size: 12px; color: var(--warning-color); margin-right: 10px; font-weight: bold; padding: 4px 8px; border: 1px solid var(--warning-color); border-radius: 4px;">Pending HA Verification</span>
+                        `;
+                    } else {
+                        headerActionsHTML = `
+                            <button class="icon-button" id="modalEditBtn" data-po-id="${poId}" data-category="${po.category}" title="Edit Order">
+                                <i class="material-icons">edit</i>
+                            </button>
+                        `;
+                    }
 
                     const poDetailsModal = document.getElementById('poDetailsModal');
                     poDetailsModal.querySelector('.modal-header').innerHTML = `
@@ -2535,9 +2485,29 @@ if (isApproved) {
                 if(poDoc.exists) {
                     const poData = poDoc.data();
                     await db.collection('approvals').doc(poId).set({
-                        approvedAt: firebase.firestore.FieldValue.serverTimestamp(), date: poData.date, category: poData.category, vendor: poData.vendor, poNumber: poData.poNumber
+                        approvedAt: firebase.firestore.FieldValue.serverTimestamp(), 
+                        date: poData.date, 
+                        category: poData.category, 
+                        vendor: poData.vendor, 
+                        poNumber: poData.poNumber,
+                        status: 'admin_approved' 
                     });
                     await renderAdminPage(); 
+                }
+            }
+
+            const verifyBtn = e.target.closest('#verifyBtn');
+            if (verifyBtn) {
+                const pwd = prompt("Enter Higher Authority Password to Verify this Order:");
+                if (pwd === HA_PASSWORD) {
+                    const poId = verifyBtn.dataset.poId;
+                    await db.collection('approvals').doc(poId).update({
+                        verifiedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                        status: 'ha_approved'
+                    });
+                    await renderAdminPage();
+                } else if (pwd !== null) { 
+                    alert("Incorrect Higher Authority Password. Verification Failed.");
                 }
             }
             
@@ -2822,86 +2792,78 @@ if (isApproved) {
         }, 200);
         document.getElementById('voucherHeader').addEventListener('keyup', debouncedVoucherHeadSearch);
         
-        // Replace your existing 'savePoBtn' listener with this:
-document.getElementById('savePoBtn').addEventListener('click', async () => {
-    const { vendor, items, total } = AppState.newPO;
-    if (!vendor) return alert('Please select a vendor.');
-    if (items.length === 0) return alert('Please add items to the order.');
+        document.getElementById('savePoBtn').addEventListener('click', async () => {
+            const { vendor, items, total } = AppState.newPO;
+            if (!vendor) return alert('Please select a vendor.');
+            if (items.length === 0) return alert('Please add items to the order.');
 
-    // disable button to prevent double clicks during upload
-    const saveBtn = document.getElementById('savePoBtn');
-    const originalText = saveBtn.textContent;
-    saveBtn.textContent = "Uploading & Saving...";
-    saveBtn.disabled = true;
+            const saveBtn = document.getElementById('savePoBtn');
+            const originalText = saveBtn.textContent;
+            saveBtn.textContent = "Uploading & Saving...";
+            saveBtn.disabled = true;
 
-    try {
-        let rackImageUrl = null;
-        
-        // 1. Handle Image Upload
-        const fileInput = document.getElementById('rackPhotoInput');
-        if (fileInput && fileInput.files.length > 0) {
-            const file = fileInput.files[0];
-            const storageRef = storage.ref();
-            // Create a unique name: rack_photos/TIMESTAMP_FILENAME
-            const fileRef = storageRef.child(`rack_photos/${Date.now()}_${file.name}`);
-            
-            // Upload
-            await fileRef.put(file);
-            // Get URL
-            rackImageUrl = await fileRef.getDownloadURL();
-        }
+            try {
+                let rackImageUrl = null;
+                
+                const fileInput = document.getElementById('rackPhotoInput');
+                if (fileInput && fileInput.files.length > 0) {
+                    const file = fileInput.files[0];
+                    const storageRef = storage.ref();
+                    const fileRef = storageRef.child(`rack_photos/${Date.now()}_${file.name}`);
+                    
+                    await fileRef.put(file);
+                    rackImageUrl = await fileRef.getDownloadURL();
+                }
 
-        // 2. Save Data (with rackImageUrl)
-        if (AppState.editingPoId) {
-            const updateData = { items: items, total: total };
-            if(rackImageUrl) updateData.rackImage = rackImageUrl; // Only update image if a new one was picked
-            
-            const poRef = db.collection('purchaseOrders').doc(AppState.editingPoId);
-            await poRef.update(updateData);
-            
-            hideModal('cartModal');
-            AppState.editingPoId = null;
-            await goBack();
-            alert(`Purchase Order updated successfully!`);
-        } else {
-            const counterRef = db.collection('counters').doc('poCounter');
-            let newPoNumber;
-            await db.runTransaction(async (transaction) => {
-                const counterDoc = await transaction.get(counterRef);
-                const newCount = (counterDoc.exists ? counterDoc.data().count : 0) + 1;
-                transaction.set(counterRef, { count: newCount }, { merge: true });
-                newPoNumber = `PO-${newCount.toString().padStart(4, '0')}`;
-            });
+                if (AppState.editingPoId) {
+                    const updateData = { items: items, total: total };
+                    if(rackImageUrl) updateData.rackImage = rackImageUrl; 
+                    
+                    const poRef = db.collection('purchaseOrders').doc(AppState.editingPoId);
+                    await poRef.update(updateData);
+                    
+                    hideModal('cartModal');
+                    AppState.editingPoId = null;
+                    await goBack();
+                    alert(`Purchase Order updated successfully!`);
+                } else {
+                    const counterRef = db.collection('counters').doc('poCounter');
+                    let newPoNumber;
+                    await db.runTransaction(async (transaction) => {
+                        const counterDoc = await transaction.get(counterRef);
+                        const newCount = (counterDoc.exists ? counterDoc.data().count : 0) + 1;
+                        transaction.set(counterRef, { count: newCount }, { merge: true });
+                        newPoNumber = `PO-${newCount.toString().padStart(4, '0')}`;
+                    });
 
-            const newPO = { 
-                poNumber: newPoNumber, 
-                category: AppState.currentCategory, 
-                timestamp: firebase.firestore.FieldValue.serverTimestamp(), 
-                date: toLocalDateString(new Date()), 
-                vendor, 
-                items, 
-                total,
-                rackImage: rackImageUrl || null // Save the URL
-            };
-            
-            await db.collection('purchaseOrders').add(newPO);
-            await clearDraftPO();
-            hideModal('cartModal');
-            await goBack();
-            alert(`Purchase Order ${newPoNumber} saved successfully!`);
-        }
-        
-        // Reset file input
-        if(fileInput) fileInput.value = '';
+                    const newPO = { 
+                        poNumber: newPoNumber, 
+                        category: AppState.currentCategory, 
+                        timestamp: firebase.firestore.FieldValue.serverTimestamp(), 
+                        date: toLocalDateString(new Date()), 
+                        vendor, 
+                        items, 
+                        total,
+                        rackImage: rackImageUrl || null 
+                    };
+                    
+                    await db.collection('purchaseOrders').add(newPO);
+                    await clearDraftPO();
+                    hideModal('cartModal');
+                    await goBack();
+                    alert(`Purchase Order ${newPoNumber} saved successfully!`);
+                }
+                
+                if(fileInput) fileInput.value = '';
 
-    } catch (error) { 
-        console.error("Error saving PO: ", error); 
-        alert("Failed to save Purchase Order: " + error.message); 
-    } finally {
-        saveBtn.textContent = originalText;
-        saveBtn.disabled = false;
-    }
-});
+            } catch (error) { 
+                console.error("Error saving PO: ", error); 
+                alert("Failed to save Purchase Order: " + error.message); 
+            } finally {
+                saveBtn.textContent = originalText;
+                saveBtn.disabled = false;
+            }
+        });
 
         function loadLogoPreview() {
             const logoData = localStorage.getItem('appLogo');
@@ -2946,3 +2908,4 @@ document.getElementById('savePoBtn').addEventListener('click', async () => {
 </script>
 
 </body>
+</html>
