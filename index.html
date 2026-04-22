@@ -2219,11 +2219,13 @@
             if (adminPOTile) { AppState.adminDrilldown.push(adminPOTile.dataset.poId); await renderAdminPage(); }
             
             const poListItem = e.target.closest('.list-item[data-po-id], .other-purchase-order-item[data-id]');
-            if (poListItem) {
+            const currentPage = AppState.history[AppState.history.length-1];
+            
+            // FIX: Prevent modal from opening if in adminPage or if the clicked item is an admin tile
+            if (poListItem && currentPage !== 'adminPage' && !e.target.closest('.admin-po-tile')) {
                 const poId = poListItem.dataset.poId || poListItem.dataset.id;
                 if (!poId) return; 
                 
-                const currentPage = AppState.history[AppState.history.length-1];
                 const collectionName = (currentPage === 'otherPurchaseListPage' || AppState.adminDrilldown[0] === 'OTHER PURCHASES') ? 'otherPurchases' : 'purchaseOrders';
 
                 try {
@@ -2242,8 +2244,9 @@
                             </button>
                         `;
                     } else if (approvalStatus === 'admin_approved') {
+                        // FIX: Added white-space nowrap and removed margin for better flexbox alignment
                         headerActionsHTML = `
-                            <span style="font-size: 12px; color: var(--warning-color); margin-right: 10px; font-weight: bold; padding: 4px 8px; border: 1px solid var(--warning-color); border-radius: 4px;">Pending HA Verification</span>
+                            <span style="font-size: 12px; color: var(--warning-color); font-weight: bold; padding: 4px 8px; border: 1px solid var(--warning-color); border-radius: 4px; white-space: nowrap;">Pending HA Verification</span>
                         `;
                     } else {
                         headerActionsHTML = `
@@ -2254,12 +2257,14 @@
                     }
 
                     const poDetailsModal = document.getElementById('poDetailsModal');
+                    // FIX: Changed structure to Flexbox to align title and badge cleanly, without absolute positioning overlap
                     poDetailsModal.querySelector('.modal-header').innerHTML = `
-                        <h3 class="modal-title" id="poDetailsTitle">Details for ${po.poNumber}</h3>
-                        <div class="header-side right">
+                        <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                            <h3 style="font-size: 18px; font-weight: 600; margin: 0;" id="poDetailsTitle">Details for ${po.poNumber}</h3>
                             ${headerActionsHTML}
-                            <button class="icon-button" data-close-modal="poDetailsModal"><i class="material-icons">close</i></button>
-                        </div>`;
+                        </div>
+                        <button class="icon-button" data-close-modal="poDetailsModal" style="flex-shrink: 0;"><i class="material-icons">close</i></button>
+                    `;
                     
                     document.getElementById('poDetailsBody').innerHTML = `
                         <p><strong>Vendor:</strong> ${po.vendor}</p>
