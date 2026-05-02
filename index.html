@@ -36,7 +36,7 @@
             --warning-color: #ffc107;
             --info-color: #17a2b8;
             --fv-color: #9C27B0;
-            --voucher-color: #E91E63;
+            --purchase-color: #E91E63;
             --promoter-items-color: #009688;
             --lemongrass-green: #8BC34A;
             --light-color: #f8f9fa;
@@ -201,7 +201,7 @@
         .tile-REPACK .material-icons { color: var(--warning-color); }
         .tile-BAKESTORY .material-icons { color: var(--info-color); }
         .tile-FV .material-icons { color: var(--fv-color); }
-        .tile-VOUCHER .material-icons { color: var(--voucher-color); }
+        .tile-PURCHASE-ENTRY .material-icons { color: var(--purchase-color); }
         .tile-PROMOTER-ITEMS .material-icons { color: var(--promoter-items-color); }
         .tile-ADMIN .material-icons { color: var(--danger-color); }
         .tile-OTHER .material-icons { color: #607D8B; }
@@ -435,7 +435,7 @@
         .admin-tile-REPACK { border-top-color: var(--warning-color); }
         .admin-tile-BAKESTORY { border-top-color: var(--info-color); }
         .admin-tile-FV { border-top-color: var(--fv-color); }
-        .admin-tile-VOUCHER { border-top-color: var(--voucher-color); }
+        .admin-tile-PURCHASE { border-top-color: var(--purchase-color); }
         .admin-tile-PROMOTER-ITEMS { border-top-color: var(--promoter-items-color); }
         
         .drilldown-header {
@@ -866,7 +866,7 @@
 
     <div id="appContainer">
         <div id="loginPage" class="page active">
-            <button class="icon-button main-page-logout logout-btn" title="Refresh"><i class="material-icons">refresh</i></button>
+            <button class="icon-button main-page-logout logout-btn" title="Refresh/Logout"><i class="material-icons">refresh</i></button>
             <div class="login-container">
                 <div class="login-header">
                     <h1>METRO FRESH</h1>
@@ -878,7 +878,7 @@
                     <a class="tile tile-REPACK" data-page="categoryPage" data-category="REPACK"><i class="material-icons">restart_alt</i><span>REPACK</span></a>
                     <a class="tile tile-BAKESTORY" data-page="categoryPage" data-category="BAKESTORY"><i class="material-icons">bakery_dining</i><span>BAKESTORY</span></a>
                     <a class="tile tile-FV" data-page="categoryPage" data-category="F&V"><i class="material-icons">grass</i><span>F&V</span></a>
-                    <a class="tile tile-VOUCHER" data-page="voucherPage"><i class="material-icons">receipt_long</i><span>VOUCHER</span></a>
+                    <a class="tile tile-PURCHASE-ENTRY" data-page="purchaseEntryPage"><i class="material-icons">fact_check</i><span>PURCHASE ENTRY</span></a>
                     <a class="tile tile-PROMOTER-ITEMS" data-page="categoryPage" data-category="PROMOTER ITEMS"><i class="material-icons">campaign</i><span>PROMOTER ITEMS</span></a>
                     <a class="tile tile-ADMIN" data-page="adminPage"><i class="material-icons">admin_panel_settings</i><span>ADMIN</span></a>
                 </div>
@@ -983,26 +983,40 @@
             <div class="content" id="adminContent"></div>
         </div>
 
-        <div id="voucherPage" class="page">
+        <div id="purchaseEntryPage" class="page">
              <div class="header">
                 <div class="header-side left">
                     <button class="icon-button back-btn"><i class="material-icons">arrow_back</i></button>
                 </div>
-                <div class="title">Vouchers</div>
+                <div class="title">Purchase Entry</div>
                 <div class="header-side right">
                     <button class="icon-button calendar-btn"><i class="material-icons">calendar_today</i></button>
                 </div>
             </div>
             <div class="content">
-                <div class="progress-container">
-                    <div class="progress-bar">
-                        <div class="progress-bar-inner" id="voucherProgressBar"></div>
-                        <div class="progress-bar-text" id="voucherProgressText">₹0 / ₹100,000</div>
-                    </div>
+                <div class="item-filter-container" style="margin-bottom: 16px;">
+                    <button class="btn item-filter-btn active" id="tabPending">Pending Bills</button>
+                    <button class="btn item-filter-btn" id="tabHistory">History</button>
                 </div>
-                <div id="voucherListContainer"></div>
+                
+                <div id="purchaseEntryPendingView">
+                    <div class="form-group">
+                        <input type="text" id="peVendorSearch" class="form-control" placeholder="Search Vendor...">
+                        <div id="peVendorSearchResults" class="search-results-list"></div>
+                    </div>
+                    <div style="display:flex; justify-content:flex-end; margin-bottom:10px;">
+                        <label style="font-size: 14px; font-weight: 500; display:flex; align-items:center; gap:5px;">
+                            <input type="checkbox" id="peShowOlder"> Show > 1 Month
+                        </label>
+                    </div>
+                    <div id="pePendingListContainer"></div>
+                </div>
+                
+                <div id="purchaseEntryHistoryView" style="display: none;">
+                    <h3 style="margin-bottom: 15px; text-align: center; color: var(--secondary-color);" id="peHistoryDateLabel">Today</h3>
+                    <div id="peHistoryListContainer"></div>
+                </div>
             </div>
-            <button class="fab" id="addVoucherBtn"><i class="material-icons">add</i></button>
         </div>
 
         <div id="otherPurchaseListPage" class="page">
@@ -1089,6 +1103,7 @@
             </div>
         </div>
     </div>
+    
     <div id="brandAlphabetModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
@@ -1098,6 +1113,7 @@
             <div class="modal-body" id="brandAlphabetList"></div>
         </div>
     </div>
+    
     <div id="settingsModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
@@ -1108,10 +1124,6 @@
                 <div class="form-group">
                     <label for="vendorFileUpload">Upload Vendor List (.csv)</label>
                     <input type="file" id="vendorFileUpload" class="form-control" accept=".csv">
-                </div>
-                <div class="form-group">
-                    <label for="voucherHeadsUpload">Upload Voucher Heads (.csv)</label>
-                    <input type="file" id="voucherHeadsUpload" class="form-control" accept=".csv">
                 </div>
                 <hr style="margin: 20px 0;">
                 <div class="form-group">
@@ -1138,40 +1150,24 @@
         </div>
     </div>
 
-    <div id="newVoucherModal" class="modal">
+    <!-- Purchase Receive Modal -->
+    <div id="purchaseReceiveModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
-                <h3 class="modal-title">New Voucher</h3>
-                <button class="icon-button" data-close-modal="newVoucherModal"><i class="material-icons">close</i></button>
+                <h3 class="modal-title">Receive PO</h3>
+                <button class="icon-button" data-close-modal="purchaseReceiveModal"><i class="material-icons">close</i></button>
             </div>
             <div class="modal-body">
-                <input type="hidden" id="editingVoucherId">
-                <div class="form-group">
-                    <label for="voucherHeader">Header</label>
-                    <input type="text" id="voucherHeader" class="form-control" placeholder="Search heads or type a new one..." autocomplete="off">
-                    <div id="voucherHeaderResults" class="search-results-list" style="position: absolute; width: 90%; max-width: 450px;"></div>
+                <p id="prPoDetails" style="font-size: 16px; margin-bottom: 5px;"></p>
+                <div class="form-group" style="margin-top: 15px;">
+                    <label for="prReceivedAmount">Total Amount Received (₹)</label>
+                    <input type="number" id="prReceivedAmount" class="form-control" placeholder="0.00" step="0.01">
                 </div>
-                <div class="form-group">
-                    <label for="voucherAmount">Amount</label>
-                    <input type="number" id="voucherAmount" class="form-control" placeholder="0.00">
-                </div>
+                <input type="hidden" id="prPoId">
+                <input type="hidden" id="prCollection">
             </div>
             <div class="modal-footer">
-                <button class="btn btn-primary" id="saveVoucherBtn">Save Voucher</button>
-            </div>
-        </div>
-    </div>
-    
-    <div id="voucherDetailsModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3 class="modal-title">Voucher Details</h3>
-                <button class="icon-button" data-close-modal="voucherDetailsModal"><i class="material-icons">close</i></button>
-            </div>
-            <div class="modal-body" id="voucherDetailsBody"></div>
-            <div class="modal-footer">
-                <button class="btn btn-danger" id="deleteVoucherBtn">Delete</button>
-                <button class="btn btn-primary" id="editVoucherBtn">Edit</button>
+                <button class="btn btn-primary" id="saveReceivePoBtn" style="width: 100%;">Save Received Amount</button>
             </div>
         </div>
     </div>
@@ -1242,7 +1238,8 @@
             itemCache: [],
             fastMovingCache: [],
             vendorCache: [],
-            editingPoId: null
+            editingPoId: null,
+            peSelectedVendor: null
         };
 
         const allPages = document.querySelectorAll('.page');
@@ -1272,7 +1269,7 @@
                 if (pageId === 'categoryPage') await renderCategoryPage(context.category);
                 if (pageId === 'adminPage') await renderAdminPage();
                 if (pageId === 'newOrderPage') await renderNewOrderPage(context);
-                if (pageId === 'voucherPage') await renderVoucherPage();
+                if (pageId === 'purchaseEntryPage') await renderPurchaseEntryPage();
                 if (pageId === 'otherPurchaseListPage') await renderOtherPurchaseListPage();
                 if (pageId === 'newOtherPurchaseOrderPage') await renderNewOtherPurchaseOrderPage(context);
             }
@@ -1413,11 +1410,6 @@
             const snapshot = await db.collection('purchaseOrders').where('category', '==', category).where('date', '==', dateString).get();
             return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         }
-
-        async function getVouchersForDate(dateString) {
-            const snapshot = await db.collection('vouchers').where('date', '==', dateString).orderBy('timestamp', 'desc').get();
-            return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        }
         
         async function getOtherPurchasesForDate(dateString) {
             const snapshot = await db.collection('otherPurchases')
@@ -1520,7 +1512,6 @@
         async function getApprovalStatus(approvalKey) {
             const doc = await db.collection('approvals').doc(approvalKey).get();
             if (!doc.exists) return null; // Not approved yet
-            // If the document exists but lacks a status (legacy data), default to 'ha_approved' so old orders don't break
             return doc.data().status || 'ha_approved'; 
         }
 
@@ -1566,31 +1557,38 @@
         
         async function renderAdminDashboard(dateString) {
             const allPOs = await getAllPOsForDate(dateString);
-            const allVouchers = await getVouchersForDate(dateString);
             const otherPurchases = await getOtherPurchasesForDate(dateString);
             const categories = ['FOOD', 'NONFOOD', 'REPACK', 'BAKESTORY', 'F&V', 'PROMOTER ITEMS'];
             let totals = { ALL: 0, ...Object.fromEntries(categories.map(cat => [cat, 0])) };
+            
             categories.forEach(cat => {
                 totals[cat] = allPOs.filter(po => po.category === cat).reduce((sum, po) => sum + po.total, 0);
                 totals.ALL += totals[cat];
             });
-            const voucherTotal = allVouchers.reduce((sum, v) => sum + v.amount, 0);
             const otherPurchasesTotal = otherPurchases.reduce((sum, p) => sum + p.total, 0);
-            totals.ALL += voucherTotal + otherPurchasesTotal;
+            totals.ALL += otherPurchasesTotal;
+
+            // Purchase Entry details for today
+            const receivedPOsSnap = await db.collection('purchaseOrders').where('receivedDate', '==', dateString).get();
+            const receivedOtherPOsSnap = await db.collection('otherPurchases').where('receivedDate', '==', dateString).get();
+            let receivedTotal = 0;
+            receivedPOsSnap.forEach(d => receivedTotal += (d.data().receivedAmount || 0));
+            receivedOtherPOsSnap.forEach(d => receivedTotal += (d.data().receivedAmount || 0));
+
             const adminContent = document.getElementById('adminContent');
             adminContent.innerHTML = updateAdminProgressBar(totals.ALL) + `<div id="adminDashboardContainer"></div>`;
             document.getElementById('adminDashboardContainer').innerHTML = `<div class="tile-grid">
                 <div class="admin-summary-tile admin-total-tile" style="background-color: var(--dark-color); cursor: default;">
-                    <span class="admin-tile-title" style="color: white;">TOTAL</span>
+                    <span class="admin-tile-title" style="color: white;">TOTAL POs</span>
                     <span class="admin-tile-amount" style="color: white;">₹${totals.ALL.toFixed(2)}</span>
                 </div>
                 ${categories.map(cat => `<a class="admin-summary-tile admin-tile-${cat.replace(/\s+/g, '-')} admin-category-tile" data-category="${cat}">
                     <span class="admin-tile-title">${cat}</span>
                     <span class="admin-tile-amount">₹${(totals[cat] || 0).toFixed(2)}</span>
                 </a>`).join('')}
-                <a class="admin-summary-tile admin-tile-VOUCHER admin-category-tile" data-category="VOUCHER">
-                    <span class="admin-tile-title">VOUCHER</span>
-                    <span class="admin-tile-amount">₹${(voucherTotal || 0).toFixed(2)}</span>
+                <a class="admin-summary-tile admin-tile-PURCHASE admin-category-tile" data-category="TODAYS PURCHASE">
+                    <span class="admin-tile-title">TODAY'S PURCHASE</span>
+                    <span class="admin-tile-amount">₹${receivedTotal.toFixed(2)}</span>
                 </a>
                 <a class="admin-summary-tile admin-category-tile" data-category="OTHER PURCHASES" style="border-top-color: #607D8B;">
                     <span class="admin-tile-title">OTHER PURCHASES</span>
@@ -1600,6 +1598,36 @@
         }
 
         async function renderAdminCategoryDetail(container, category, dateString) {
+            if (category === 'TODAYS PURCHASE') {
+                const c1 = await db.collection('purchaseOrders').where('receivedDate', '==', dateString).get();
+                const c2 = await db.collection('otherPurchases').where('receivedDate', '==', dateString).get();
+                let history = [];
+                c1.forEach(d => history.push({ id: d.id, ...d.data() }));
+                c2.forEach(d => history.push({ id: d.id, ...d.data() }));
+                
+                if (history.length === 0) {
+                    container.innerHTML = `<div class="empty-state"><i class="material-icons">info</i><p>No purchase entries received on this date.</p></div>`;
+                    return;
+                }
+
+                const totalPo = history.reduce((s,x) => s + x.total, 0);
+                const totalRec = history.reduce((s,x) => s + x.receivedAmount, 0);
+                
+                container.innerHTML = `
+                    <div class="drilldown-header">
+                        <div>Purchase Entries (${formatDisplayDate(dateString)})</div>
+                    </div>
+                    <div style="background-color:var(--card-bg); padding:16px; border-radius:var(--border-radius); box-shadow:var(--shadow); margin-bottom:16px; display:flex; justify-content:space-between; align-items:center;">
+                        <div><span style="font-size:14px; color:var(--secondary-color); display:block;">Total PO Amount</span><span style="font-size:18px; font-weight:600;">₹${totalPo.toFixed(2)}</span></div>
+                        <div class="text-right"><span style="font-size:14px; color:var(--secondary-color); display:block;">Total Received</span><span style="font-size:18px; font-weight:600; color:var(--success-color);">₹${totalRec.toFixed(2)}</span></div>
+                    </div>
+                    <div class="detail-table-wrapper"><table class="detail-table">
+                        <thead><tr><th>Vendor</th><th>PO Number</th><th class="text-right">PO Amt</th><th class="text-right">Recv Amt</th></tr></thead>
+                        <tbody>${history.map(h => `<tr><td>${h.vendor}</td><td>${h.poNumber}</td><td class="text-right">₹${h.total.toFixed(2)}</td><td class="text-right" style="color:var(--success-color); font-weight:600;">₹${h.receivedAmount.toFixed(2)}</td></tr>`).join('')}</tbody>
+                    </table></div>
+                `;
+                return;
+            }
              if (category === 'OTHER PURCHASES') {
                 const purchases = await getOtherPurchasesForDate(dateString);
                 if (purchases.length === 0) {
@@ -1614,24 +1642,6 @@
                                 <span class="list-item-subtitle">${p.poNumber}</span>
                             </div>
                             <span class="list-item-amount">₹${p.total.toFixed(2)}</span>
-                        </li>`).join('')}</ul>`;
-                return;
-            }
-             if (category === 'VOUCHER') {
-                const vouchers = await getVouchersForDate(dateString);
-                const headerTotals = vouchers.reduce((acc, v) => {
-                    acc[v.header] = (acc[v.header] || 0) + v.amount;
-                    return acc;
-                }, {});
-                if (Object.keys(headerTotals).length === 0) {
-                    container.innerHTML = `<div class="empty-state"><i class="material-icons">info</i><p>No vouchers on this date.</p></div>`;
-                    return;
-                }
-                container.innerHTML = `<div class="drilldown-header">Voucher Totals</div>
-                    <ul class="item-list">${Object.entries(headerTotals).map(([header, total]) => `
-                        <li class="list-item admin-vendor-tile" data-vendor="${header}">
-                            <span class="list-item-title">${header}</span>
-                            <span class="list-item-amount">₹${total.toFixed(2)}</span>
                         </li>`).join('')}</ul>`;
                 return;
             }
@@ -1653,19 +1663,6 @@
         
         async function renderAdminVendorDetail(container, category, poId) {
             const collectionName = category === 'OTHER PURCHASES' ? 'otherPurchases' : 'purchaseOrders';
-            
-            if (category === 'VOUCHER') {
-                const vendorOrHeader = poId;
-                const dateString = toLocalDateString(AppState.currentDate);
-                const snapshot = await db.collection('vouchers').where('date', '==', dateString).where('header', '==', vendorOrHeader).get();
-                const vouchers = snapshot.docs.map(doc => doc.data());
-                container.innerHTML = `<div class="drilldown-header">Vouchers for ${vendorOrHeader}</div>
-                    <div class="detail-table-wrapper"><table class="detail-table">
-                        <thead><tr><th>Date</th><th class="text-right">Amount</th></tr></thead>
-                        <tbody>${vouchers.map(v => `<tr><td>${formatDisplayDate(v.date)}</td><td class="text-right">₹${v.amount.toFixed(2)}</td></tr>`).join('')}</tbody>
-                    </table></div>`;
-                return;
-            }
 
             const poDoc = await db.collection(collectionName).doc(poId).get();
             if (!poDoc.exists) {
@@ -1728,6 +1725,7 @@
             const enteredPassword = passwordInput.value;
 
             if (enteredPassword === ADMIN_PASSWORD) {
+                localStorage.setItem('adminAuth', 'true');
                 passwordInput.value = '';
                 passwordError.style.display = 'none';
                 hideModal('passwordModal');
@@ -1761,31 +1759,99 @@
             updateProgressBar(filteredPOs, 'po');
         }
 
-        async function renderVoucherPage() {
-            await renderVoucherList();
+        /* ----- Purchase Entry Module Methods ----- */
+        async function renderPurchaseEntryPage() {
+            document.getElementById('peVendorSearch').value = '';
+            document.getElementById('pePendingListContainer').innerHTML = '';
+            document.getElementById('peShowOlder').checked = false;
+            
+            // default to pending tab
+            document.getElementById('tabPending').classList.add('active');
+            document.getElementById('tabHistory').classList.remove('active');
+            document.getElementById('purchaseEntryPendingView').style.display = 'block';
+            document.getElementById('purchaseEntryHistoryView').style.display = 'none';
+            
+            if (AppState.vendorCache.length === 0) {
+                const vendorsSnapshot = await db.collection('vendors').orderBy('Customer').get();
+                AppState.vendorCache = vendorsSnapshot.docs.map(doc => doc.data());
+            }
         }
 
-        async function renderVoucherList() {
-            const container = document.getElementById('voucherListContainer');
-            const dateString = toLocalDateString(AppState.currentDate);
-            const filteredVouchers = await getVouchersForDate(dateString);
-            container.innerHTML = filteredVouchers.length === 0
-                ? `<div class="empty-state"><i class="material-icons">receipt_long</i><p>No vouchers for today.</p></div>`
-                : `<ul class="item-list">${filteredVouchers.map(v => `
-                    <li class="list-item voucher-list-item" data-id="${v.id}" style="cursor:pointer;">
-                        <span class="list-item-title">${v.header}</span>
-                        <span class="list-item-amount">₹${v.amount.toFixed(2)}</span>
+        async function loadPEPending(vendor) {
+            if(!vendor) return;
+            AppState.peSelectedVendor = vendor;
+            document.getElementById('peVendorSearch').value = vendor;
+            document.getElementById('peVendorSearchResults').innerHTML = '';
+            
+            const showOlder = document.getElementById('peShowOlder').checked;
+            const cutoffDate = new Date();
+            cutoffDate.setDate(cutoffDate.getDate() - 30);
+            const cutoffString = toLocalDateString(cutoffDate);
+            
+            const c1 = await db.collection('purchaseOrders').where('vendor', '==', vendor).get();
+            const c2 = await db.collection('otherPurchases').where('vendor', '==', vendor).get();
+            
+            let pending = [];
+            c1.forEach(d => pending.push({ id: d.id, collection: 'purchaseOrders', ...d.data() }));
+            c2.forEach(d => pending.push({ id: d.id, collection: 'otherPurchases', ...d.data() }));
+            
+            pending = pending.filter(po => !po.received);
+            if (!showOlder) {
+                pending = pending.filter(po => po.date >= cutoffString);
+            }
+            
+            // Sort descending by date
+            pending.sort((a,b) => b.date.localeCompare(a.date));
+            
+            const container = document.getElementById('pePendingListContainer');
+            if (pending.length === 0) {
+                container.innerHTML = '<div class="empty-state"><p>No pending bills found.</p></div>';
+            } else {
+                container.innerHTML = `<ul class="item-list">${pending.map(po => `
+                    <li class="list-item pe-receive-btn" data-id="${po.id}" data-col="${po.collection}" data-po="${po.poNumber}" data-total="${po.total}" data-vendor="${po.vendor}">
+                        <div class="list-item-main">
+                            <span class="list-item-title">${po.poNumber} (${po.collection === 'otherPurchases' ? 'Other' : po.category})</span>
+                            <span class="list-item-subtitle">Date: ${formatDisplayDate(po.date)}</span>
+                        </div>
+                        <span class="list-item-amount">₹${po.total.toFixed(2)}</span>
                     </li>
                 `).join('')}</ul>`;
-            updateProgressBar(filteredVouchers, 'voucher');
+            }
+        }
+
+        async function loadPEHistory() {
+            const dateString = toLocalDateString(AppState.currentDate);
+            document.getElementById('peHistoryDateLabel').textContent = formatDisplayDate(dateString);
+            
+            const c1 = await db.collection('purchaseOrders').where('receivedDate', '==', dateString).get();
+            const c2 = await db.collection('otherPurchases').where('receivedDate', '==', dateString).get();
+            
+            let history = [];
+            c1.forEach(d => history.push({ id: d.id, collection: 'purchaseOrders', ...d.data() }));
+            c2.forEach(d => history.push({ id: d.id, collection: 'otherPurchases', ...d.data() }));
+            
+            const container = document.getElementById('peHistoryListContainer');
+            if (history.length === 0) {
+                container.innerHTML = '<div class="empty-state"><p>No entries for this date.</p></div>';
+            } else {
+                container.innerHTML = `<ul class="item-list">${history.map(po => `
+                    <li class="list-item pe-receive-btn" data-id="${po.id}" data-col="${po.collection}" data-po="${po.poNumber}" data-total="${po.total}" data-received="${po.receivedAmount}" data-vendor="${po.vendor}">
+                        <div class="list-item-main">
+                            <span class="list-item-title">${po.vendor}</span>
+                            <span class="list-item-subtitle">${po.poNumber} (PO: ₹${po.total.toFixed(2)})</span>
+                        </div>
+                        <span class="list-item-amount" style="color:var(--success-color);">₹${po.receivedAmount.toFixed(2)}</span>
+                    </li>
+                `).join('')}</ul>`;
+            }
         }
 
         function updateProgressBar(items, type) {
-            const total = items.reduce((sum, item) => sum + (type === 'voucher' ? item.amount : item.total), 0);
+            const total = items.reduce((sum, item) => sum + item.total, 0);
             const max = 100000;
             const percentage = Math.min((total / max) * 100, 100);
-            const bar = document.getElementById(type === 'voucher' ? 'voucherProgressBar' : 'poProgressBar');
-            const text = document.getElementById(type === 'voucher' ? 'voucherProgressText' : 'poProgressText');
+            const bar = document.getElementById('poProgressBar');
+            const text = document.getElementById('poProgressText');
             if(bar) bar.style.width = `${percentage}%`;
             if(text) text.textContent = `₹${total.toFixed(0)} / ₹${max.toLocaleString()}`;
         }
@@ -1921,9 +1987,11 @@
         
         function renderVendorSearchResults(query) {
             const currentPage = AppState.history[AppState.history.length-1];
-            const container = (currentPage === 'newOtherPurchaseOrderPage') 
-                ? document.getElementById('otherVendorSearchResults') 
-                : document.getElementById('vendorSearchResults');
+            
+            let container = null;
+            if(currentPage === 'newOtherPurchaseOrderPage') container = document.getElementById('otherVendorSearchResults');
+            else if (currentPage === 'purchaseEntryPage') container = document.getElementById('peVendorSearchResults');
+            else container = document.getElementById('vendorSearchResults');
             
             if (!container) return;
             if (!query || query.length < 1) { container.innerHTML = ''; return; }
@@ -2113,17 +2181,85 @@
         document.body.addEventListener('click', async (e) => {
 
             if (e.target.closest('.logout-btn')) {
-                if (confirm('Refresh Application?')) {
+                if (confirm('Refresh Application and logout Admin?')) {
+                    localStorage.removeItem('adminAuth');
                     location.reload(); 
                 }
             }
             
+            // Purchase Entry Tabs
+            if (e.target.id === 'tabPending') {
+                document.getElementById('tabPending').classList.add('active');
+                document.getElementById('tabHistory').classList.remove('active');
+                document.getElementById('purchaseEntryPendingView').style.display = 'block';
+                document.getElementById('purchaseEntryHistoryView').style.display = 'none';
+            }
+            if (e.target.id === 'tabHistory') {
+                document.getElementById('tabHistory').classList.add('active');
+                document.getElementById('tabPending').classList.remove('active');
+                document.getElementById('purchaseEntryHistoryView').style.display = 'block';
+                document.getElementById('purchaseEntryPendingView').style.display = 'none';
+                loadPEHistory();
+            }
+            
+            // Receive button
+            const peReceiveBtn = e.target.closest('.pe-receive-btn');
+            if (peReceiveBtn) {
+                const poId = peReceiveBtn.dataset.id;
+                const col = peReceiveBtn.dataset.col;
+                const poNumber = peReceiveBtn.dataset.po;
+                const poTotal = parseFloat(peReceiveBtn.dataset.total);
+                const vendor = peReceiveBtn.dataset.vendor;
+                const received = peReceiveBtn.dataset.received;
+
+                document.getElementById('prPoDetails').innerHTML = `<strong>Vendor:</strong> ${vendor}<br><strong>PO Number:</strong> ${poNumber}<br><strong>PO Amount:</strong> ₹${poTotal.toFixed(2)}`;
+                document.getElementById('prPoId').value = poId;
+                document.getElementById('prCollection').value = col;
+                document.getElementById('prReceivedAmount').value = received ? parseFloat(received).toFixed(2) : poTotal.toFixed(2); 
+
+                showModal('purchaseReceiveModal');
+            }
+            
+            // Save receive action
+            if (e.target.id === 'saveReceivePoBtn') {
+                const poId = document.getElementById('prPoId').value;
+                const col = document.getElementById('prCollection').value;
+                const receivedAmount = parseFloat(document.getElementById('prReceivedAmount').value);
+                
+                if (isNaN(receivedAmount)) { alert('Enter a valid amount'); return; }
+
+                try {
+                    const docRef = db.collection(col).doc(poId);
+                    const existingData = (await docRef.get()).data();
+                    
+                    const updateObj = {
+                        received: true,
+                        receivedAmount: receivedAmount,
+                        // Maintain original receivedDate if it was already set, otherwise set it to today
+                        receivedDate: existingData.receivedDate || toLocalDateString(new Date())
+                    };
+
+                    await docRef.update(updateObj);
+                    
+                    hideModal('purchaseReceiveModal');
+                    
+                    if(document.getElementById('tabPending').classList.contains('active')) {
+                        loadPEPending(AppState.peSelectedVendor);
+                    } else {
+                        loadPEHistory();
+                    }
+                } catch(err) {
+                    console.error("Error receiving PO", err);
+                    alert("Failed to save. Check your connection.");
+                }
+            }
+
             const itemFilterBtn = e.target.closest('.item-filter-btn');
-            if(itemFilterBtn) {
+            if(itemFilterBtn && !itemFilterBtn.id.startsWith('tab')) {
                 const filterType = itemFilterBtn.dataset.filter;
                 AppState.currentFilterMode[AppState.currentCategory] = filterType;
 
-                document.querySelectorAll('.item-filter-btn').forEach(btn => btn.classList.remove('active'));
+                document.querySelectorAll('#newOrderPage .item-filter-btn').forEach(btn => btn.classList.remove('active'));
                 itemFilterBtn.classList.add('active');
 
                 renderProductSearchResults(document.getElementById('productSearch').value);
@@ -2170,7 +2306,11 @@
                 AppState.currentDate = new Date(); 
                 AppState.adminDrilldown = []; 
                 if (tile.dataset.page === 'adminPage') {
-                    showModal('passwordModal');
+                    if (localStorage.getItem('adminAuth') === 'true') {
+                        await navigateTo('adminPage');
+                    } else {
+                        showModal('passwordModal');
+                    }
                 } else {
                     await navigateTo(tile.dataset.page, { category: tile.dataset.category }); 
                 }
@@ -2189,19 +2329,17 @@
                 switch (currentPage) {
                     case 'categoryPage': await renderCategoryPage(AppState.currentCategory); break;
                     case 'adminPage': await renderAdminPage(); break;
-                    case 'voucherPage': await renderVoucherPage(); break;
+                    case 'purchaseEntryPage': 
+                        if(document.getElementById('tabHistory').classList.contains('active')) {
+                            loadPEHistory();
+                        }
+                        break;
                     case 'otherPurchaseListPage': await renderOtherPurchaseListPage(); break;
                 }
             }
             if (e.target.closest('#addPoBtn')) await navigateTo('newOrderPage');
             if (e.target.closest('#addOtherPurchaseBtn')) await navigateTo('newOtherPurchaseOrderPage');
-            if (e.target.closest('#addVoucherBtn')) {
-                document.getElementById('newVoucherModal').querySelector('.modal-title').textContent = 'New Voucher';
-                document.getElementById('editingVoucherId').value = '';
-                document.getElementById('voucherHeader').value = '';
-                document.getElementById('voucherAmount').value = '';
-                showModal('newVoucherModal');
-            }
+            
             if (e.target.closest('[data-close-modal]')) {
                 const modalId = e.target.closest('.modal').id;
                 if (modalId === 'scannerModal') { stopScanner(); } 
@@ -2221,7 +2359,6 @@
             const poListItem = e.target.closest('.list-item[data-po-id], .other-purchase-order-item[data-id]');
             const currentPage = AppState.history[AppState.history.length-1];
             
-            // FIX: Prevent modal from opening if in adminPage or if the clicked item is an admin tile
             if (poListItem && currentPage !== 'adminPage' && !e.target.closest('.admin-po-tile')) {
                 const poId = poListItem.dataset.poId || poListItem.dataset.id;
                 if (!poId) return; 
@@ -2244,7 +2381,6 @@
                             </button>
                         `;
                     } else if (approvalStatus === 'admin_approved') {
-                        // FIX: Added white-space nowrap and removed margin for better flexbox alignment
                         headerActionsHTML = `
                             <span style="font-size: 12px; color: var(--warning-color); font-weight: bold; padding: 4px 8px; border: 1px solid var(--warning-color); border-radius: 4px; white-space: nowrap;">Pending HA Verification</span>
                         `;
@@ -2257,7 +2393,6 @@
                     }
 
                     const poDetailsModal = document.getElementById('poDetailsModal');
-                    // FIX: Changed structure to Flexbox to align title and badge cleanly, without absolute positioning overlap
                     poDetailsModal.querySelector('.modal-header').innerHTML = `
                         <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
                             <h3 style="font-size: 18px; font-weight: 600; margin: 0;" id="poDetailsTitle">Details for ${po.poNumber}</h3>
@@ -2302,79 +2437,24 @@
                 } catch (error) { console.error("Failed to fetch order details:", error); alert("An error occurred while fetching order details."); }
             }
 
-            const voucherListItem = e.target.closest('.voucher-list-item');
-            if (voucherListItem) {
-                const voucherId = voucherListItem.dataset.id;
-                const header = voucherListItem.querySelector('.list-item-title').textContent;
-                const amountText = voucherListItem.querySelector('.list-item-amount').textContent;
-                
-                document.getElementById('voucherDetailsBody').innerHTML = `
-                    <p><strong>Header:</strong> ${header}</p>
-                    <p><strong>Amount:</strong> ${amountText}</p>
-                `;
-
-                document.getElementById('editVoucherBtn').dataset.id = voucherId;
-                document.getElementById('editVoucherBtn').dataset.header = header;
-                document.getElementById('editVoucherBtn').dataset.amount = amountText.replace('₹', '');
-                document.getElementById('deleteVoucherBtn').dataset.id = voucherId;
-
-                showModal('voucherDetailsModal');
-            }
-
-            if (e.target.closest('#deleteVoucherBtn')) {
-                if (confirm('Are you sure you want to delete this voucher? This action cannot be undone.')) {
-                    const voucherId = e.target.closest('#deleteVoucherBtn').dataset.id;
-                    try {
-                        await db.collection('vouchers').doc(voucherId).delete();
-                        hideModal('voucherDetailsModal');
-                        await renderVoucherList();
-                        alert('Voucher deleted successfully.');
-                    } catch (error) {
-                        alert('Failed to delete voucher.');
-                        console.error("Error deleting voucher:", error);
-                    }
-                }
-            }
-
-            if (e.target.closest('#editVoucherBtn')) {
-                const button = e.target.closest('#editVoucherBtn');
-                const voucherId = button.dataset.id;
-                const header = button.dataset.header;
-                const amount = button.dataset.amount;
-
-                hideModal('voucherDetailsModal');
-
-                document.getElementById('newVoucherModal').querySelector('.modal-title').textContent = 'Edit Voucher';
-                document.getElementById('editingVoucherId').value = voucherId;
-                document.getElementById('voucherHeader').value = header;
-                document.getElementById('voucherAmount').value = parseFloat(amount);
-                
-                showModal('newVoucherModal');
-            }
-
             if (e.target.closest('#cart-btn')) { renderCartModal(); showModal('cartModal'); }
             
             const vendorItem = e.target.closest('.vendor-search-item');
-            if (vendorItem && !e.target.closest('#voucherHeaderResults')) {
+            if (vendorItem) {
                 const vendorName = vendorItem.dataset.vendorName;
                 const currentPage = AppState.history[AppState.history.length-1];
                 if (currentPage === 'newOtherPurchaseOrderPage') {
                     AppState.newOtherPO.vendor = vendorName;
                     document.getElementById('otherVendorSearch').value = vendorName;
                     document.getElementById('otherVendorSearchResults').innerHTML = '';
+                } else if (currentPage === 'purchaseEntryPage') {
+                    loadPEPending(vendorName);
                 } else {
                     AppState.newPO.vendor = vendorName;
                     document.getElementById('vendorSearch').value = vendorName;
                     document.getElementById('vendorSearchResults').innerHTML = '';
                     await loadDraftPO();
                 }
-            }
-
-            const voucherHeadItem = e.target.closest('#voucherHeaderResults .vendor-search-item');
-            if (voucherHeadItem) {
-                const headName = voucherHeadItem.dataset.head;
-                document.getElementById('voucherHeader').value = headName;
-                document.getElementById('voucherHeaderResults').innerHTML = '';
             }
 
             const removeItemBtn = e.target.closest('.po-item-remove');
@@ -2435,49 +2515,6 @@
                 } catch (error) { console.error("Error saving Other Purchase Order: ", error); alert("Failed to save the order."); }
             }
 
-            const saveVoucherBtn = e.target.closest('#saveVoucherBtn');
-            if (saveVoucherBtn) {
-                const editingId = document.getElementById('editingVoucherId').value;
-                const header = document.getElementById('voucherHeader').value.trim();
-                const amount = parseFloat(document.getElementById('voucherAmount').value);
-
-                if (!header || isNaN(amount) || amount <= 0) {
-                    alert('Please enter a valid header and amount.');
-                    return;
-                }
-
-                try {
-                    if (editingId) {
-                        const voucherRef = db.collection('vouchers').doc(editingId);
-                        await voucherRef.update({ header: header, amount: amount });
-                        alert('Voucher updated successfully!');
-                    } else {
-                        const newVoucher = { 
-                            timestamp: firebase.firestore.FieldValue.serverTimestamp(), 
-                            date: toLocalDateString(new Date()), 
-                            header, 
-                            amount 
-                        };
-                        await db.collection('vouchers').add(newVoucher);
-                        alert('Voucher saved successfully!');
-                    }
-
-                    document.getElementById('newVoucherModal').querySelector('.modal-title').textContent = 'New Voucher';
-                    document.getElementById('editingVoucherId').value = '';
-                    document.getElementById('voucherHeader').value = '';
-                    document.getElementById('voucherAmount').value = '';
-                    document.getElementById('voucherHeaderResults').innerHTML = '';
-
-                    hideModal('newVoucherModal');
-                    if(AppState.history[AppState.history.length-1] === 'voucherPage') {
-                        await renderVoucherList();
-                    }
-
-                } catch (error) {
-                    console.error("Error saving voucher: ", error);
-                    alert("Failed to save voucher.");
-                }
-            }
             if (e.target.closest('#settingsBtn')) { showModal('settingsModal'); }
             
             const approveBtn = e.target.closest('#approveBtn');
@@ -2623,6 +2660,14 @@
             }
         });
         
+        document.body.addEventListener('change', (e) => {
+            if (e.target.id === 'peShowOlder') {
+                if (AppState.peSelectedVendor) {
+                    loadPEPending(AppState.peSelectedVendor);
+                }
+            }
+        });
+
         document.body.addEventListener('input', async (e) => {
             const qtyInput = e.target.closest('.po-item-qty');
             if (qtyInput) {
@@ -2707,20 +2752,6 @@
             });
         });
         
-        document.getElementById('voucherHeadsUpload').addEventListener('change', e => {
-            handleFileUpload(e.target.files[0], (data) => {
-                if (data.length === 0 || !data[0]['Voucher Heads']) {
-                    alert('Error: CSV file must contain a column named "Voucher Heads".');
-                    return;
-                }
-                const heads = data
-                    .map(row => row['Voucher Heads'] ? row['Voucher Heads'].trim() : '')
-                    .filter(head => head !== '');
-                localStorage.setItem('voucherHeads', JSON.stringify(heads));
-                alert(`Successfully uploaded and saved ${heads.length} voucher heads.`);
-            });
-        });
-        
         const handleMasterListUpload = (e) => {
             const category = e.target.dataset.category;
             handleFileUpload(e.target.files[0], async (data) => {
@@ -2779,24 +2810,8 @@
         const debouncedVendorSearch = debounce((event) => renderVendorSearchResults(event.target.value));
         document.getElementById('vendorSearch').addEventListener('keyup', debouncedVendorSearch);
         document.getElementById('otherVendorSearch').addEventListener('keyup', debouncedVendorSearch);
+        document.getElementById('peVendorSearch').addEventListener('keyup', debouncedVendorSearch);
 
-        const debouncedVoucherHeadSearch = debounce((event) => {
-            const query = event.target.value.toLowerCase();
-            const resultsContainer = document.getElementById('voucherHeaderResults');
-            const storedHeads = localStorage.getItem('voucherHeads');
-            const heads = storedHeads ? JSON.parse(storedHeads) : [];
-
-            if (!query || heads.length === 0) {
-                resultsContainer.innerHTML = '';
-                return;
-            }
-            const filteredHeads = heads.filter(h => h.toLowerCase().includes(query)).slice(0, 10);
-            resultsContainer.innerHTML = filteredHeads.map(head => 
-                `<div class="vendor-search-item" data-head="${head}">${head}</div>`
-            ).join('');
-        }, 200);
-        document.getElementById('voucherHeader').addEventListener('keyup', debouncedVoucherHeadSearch);
-        
         document.getElementById('savePoBtn').addEventListener('click', async () => {
             const { vendor, items, total } = AppState.newPO;
             if (!vendor) return alert('Please select a vendor.');
