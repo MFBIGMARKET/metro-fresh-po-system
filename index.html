@@ -1808,12 +1808,21 @@
                 container.innerHTML = '<div class="empty-state"><p>No pending bills found.</p></div>';
             } else {
                 container.innerHTML = `<ul class="item-list">${pending.map(po => `
-                    <li class="list-item pe-receive-btn" data-id="${po.id}" data-col="${po.collection}" data-po="${po.poNumber}" data-total="${po.total}" data-vendor="${po.vendor}">
-                        <div class="list-item-main">
-                            <span class="list-item-title">${po.poNumber} (${po.collection === 'otherPurchases' ? 'Other' : po.category})</span>
-                            <span class="list-item-subtitle">Date: ${formatDisplayDate(po.date)}</span>
+                    <li class="list-item" style="flex-direction: column; align-items: stretch; gap: 8px; cursor: default;">
+                        <div class="pe-receive-btn" data-id="${po.id}" data-col="${po.collection}" data-po="${po.poNumber}" data-total="${po.total}" data-vendor="${po.vendor}" style="display: flex; justify-content: space-between; align-items: center; width: 100%; cursor: pointer;">
+                            <div class="list-item-main">
+                                <span class="list-item-title">${po.poNumber} (${po.collection === 'otherPurchases' ? 'Other' : po.category})</span>
+                                <span class="list-item-subtitle">Date: ${formatDisplayDate(po.date)}</span>
+                            </div>
+                            <span class="list-item-amount">₹${po.total.toFixed(2)}</span>
                         </div>
-                        <span class="list-item-amount">₹${po.total.toFixed(2)}</span>
+                        <div style="display: flex; justify-content: flex-end; width: 100%;">
+                            <button class="btn toggle-items-btn" style="padding: 4px 10px; font-size: 12px; background-color: #f1f3f5; color: var(--secondary-color); border: 1px solid #ced4da; border-radius: 4px;">Show Items</button>
+                        </div>
+                        <div class="po-items-list" style="display: none; background: #f8f9fa; padding: 12px; border-radius: 6px; margin-top: 4px; font-size: 13px; border: 1px solid #eee;">
+                            <div style="font-weight: 600; margin-bottom: 8px; border-bottom: 1px solid #ddd; padding-bottom: 4px;">Order Items:</div>
+                            ${po.items.map(item => `<div style="display:flex; justify-content:space-between; margin-bottom:6px; color: var(--dark-color);"><span>${item.qty} x ${item.itemName}</span><span style="font-weight: 500;">₹${(item.qty * item.cost).toFixed(2)}</span></div>`).join('')}
+                        </div>
                     </li>
                 `).join('')}</ul>`;
             }
@@ -1835,12 +1844,21 @@
                 container.innerHTML = '<div class="empty-state"><p>No entries for this date.</p></div>';
             } else {
                 container.innerHTML = `<ul class="item-list">${history.map(po => `
-                    <li class="list-item pe-receive-btn" data-id="${po.id}" data-col="${po.collection}" data-po="${po.poNumber}" data-total="${po.total}" data-received="${po.receivedAmount}" data-vendor="${po.vendor}">
-                        <div class="list-item-main">
-                            <span class="list-item-title">${po.vendor}</span>
-                            <span class="list-item-subtitle">${po.poNumber} (PO: ₹${po.total.toFixed(2)})</span>
+                    <li class="list-item" style="flex-direction: column; align-items: stretch; gap: 8px; cursor: default;">
+                        <div class="pe-receive-btn" data-id="${po.id}" data-col="${po.collection}" data-po="${po.poNumber}" data-total="${po.total}" data-received="${po.receivedAmount}" data-vendor="${po.vendor}" style="display: flex; justify-content: space-between; align-items: center; width: 100%; cursor: pointer;">
+                            <div class="list-item-main">
+                                <span class="list-item-title">${po.vendor}</span>
+                                <span class="list-item-subtitle">${po.poNumber} (PO: ₹${po.total.toFixed(2)})</span>
+                            </div>
+                            <span class="list-item-amount" style="color:var(--success-color);">₹${po.receivedAmount.toFixed(2)}</span>
                         </div>
-                        <span class="list-item-amount" style="color:var(--success-color);">₹${po.receivedAmount.toFixed(2)}</span>
+                        <div style="display: flex; justify-content: flex-end; width: 100%;">
+                            <button class="btn toggle-items-btn" style="padding: 4px 10px; font-size: 12px; background-color: #f1f3f5; color: var(--secondary-color); border: 1px solid #ced4da; border-radius: 4px;">Show Items</button>
+                        </div>
+                        <div class="po-items-list" style="display: none; background: #f8f9fa; padding: 12px; border-radius: 6px; margin-top: 4px; font-size: 13px; border: 1px solid #eee;">
+                            <div style="font-weight: 600; margin-bottom: 8px; border-bottom: 1px solid #ddd; padding-bottom: 4px;">Order Items:</div>
+                            ${po.items.map(item => `<div style="display:flex; justify-content:space-between; margin-bottom:6px; color: var(--dark-color);"><span>${item.qty} x ${item.itemName}</span><span style="font-weight: 500;">₹${(item.qty * item.cost).toFixed(2)}</span></div>`).join('')}
+                        </div>
                     </li>
                 `).join('')}</ul>`;
             }
@@ -2200,6 +2218,22 @@
                 document.getElementById('purchaseEntryHistoryView').style.display = 'block';
                 document.getElementById('purchaseEntryPendingView').style.display = 'none';
                 loadPEHistory();
+            }
+
+            // Toggle Show/Hide Items
+            const toggleItemsBtn = e.target.closest('.toggle-items-btn');
+            if (toggleItemsBtn) {
+                e.stopPropagation(); // Prevents click from bubbling up
+                const itemsList = toggleItemsBtn.closest('.list-item').querySelector('.po-items-list');
+                
+                if (itemsList.style.display === 'none') {
+                    itemsList.style.display = 'block';
+                    toggleItemsBtn.textContent = 'Hide Items';
+                } else {
+                    itemsList.style.display = 'none';
+                    toggleItemsBtn.textContent = 'Show Items';
+                }
+                return;
             }
             
             // Receive button
